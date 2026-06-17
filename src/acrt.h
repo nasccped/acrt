@@ -53,7 +53,7 @@ void __acrt_run_bool_assertion(acrt_t *, const char *, const unsigned int,
 
 /* Runs a boolean assertion. */
 #define acrt_bool(POINTER, EXPR)                                               \
-  __acrt_run_bool_assertion((POINTER), __FILE__, __LINE__, #EXPR, (EXPR))
+  __acrt_run_bool_assertion((POINTER), __FILE__, __LINE__, #EXPR, (!!(EXPR)))
 
 /* Creates a new acrt struct. The name and counter is set to default. You can
  * still set a custom name by using 'acrt_set_name' function. */

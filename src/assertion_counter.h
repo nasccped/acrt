@@ -13,4 +13,10 @@ typedef struct {
   uint8_t failed;
 } assertion_counter_t;
 
+/* Reset the assertion counter to it's original state. */
+void assertion_counter_reset(assertion_counter_t *);
+
+/* Updates the self counter pointer based on an integer result. */
+void assertion_counter_update(assertion_counter_t *, int);
+
 #endif

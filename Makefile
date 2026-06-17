@@ -2,20 +2,20 @@ CC=gcc
 FLAGS=-Wall -Wextra
 SRC_DIR=./src
 SRC_FILES=$(wildcard $(SRC_DIR)/*.c)
-TEST_DIR=./tests
-TEST_FILES=$(wildcard $(TEST_DIR)/*.c)
-TEST_BINS=$(patsubst $(TEST_DIR)/%.c,$(OUT_DIR)/%.exe,$(TEST_FILES))
+EXAMPLE_DIR=./examples
+EXAMPLE_FILES=$(wildcard $(EXAMPLE_DIR)/*.c)
+EXAMPLE_BINS=$(patsubst $(EXAMPLE_DIR)/%.c,$(OUT_DIR)/example-%.exe,$(EXAMPLE_FILES))
 OUT_DIR=./out
 
-# build test cases
-test-build: $(TEST_BINS)
+# examples requirements
+build-example: $(OUT_DIR) $(EXAMPLE_BINS)
 
-# run test cases
-test-run: $(TEST_BINS)
-	$(foreach test,$^,./$(test))
+# example build recipes
+$(OUT_DIR)/example-%.exe: $(EXAMPLE_DIR)/%.c $(SRC_FILES)
+	$(CC) $(FLAGS) -g $^ -o $@
 
-# pattern build recipe
-$(OUT_DIR)/%.exe: $(TEST_DIR)/%.c $(SRC_FILES)
-	$(CC) $(FLAGS) $^ -o $@
+# if not out dir
+$(OUT_DIR):
+	mkdir $@
 
-.PHONY: test-build test-run
+.PHONY: build-example

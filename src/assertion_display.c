@@ -14,8 +14,8 @@
 #define BLUE GEN_COLOR(94)
 #define WHITE GEN_COLOR(97)
 
-#define FAILED_RED RED "failed" RESET
-#define PASSED_GREEN GREEN "passed" RESET
+#define COLORED_STATUS(RESULT)                                                 \
+  (RESULT) ? GREEN "passed" RESET : RED "failed" RESET
 
 /* Cool tag printing for the provided wrapper inner data. */
 void __print_tag(assertion_wrapper_t *);
@@ -51,12 +51,11 @@ void __print_kind_description(assertion_wrapper_t *self) {
   if (!self)
     return;
   FILE *f = self->result ? stdout : stderr;
-  const char *colored_status = self->result ? PASSED_GREEN : FAILED_RED;
   switch (self->kind) {
   case BOOLEAN_EXPRESSION:
     fprintf(
         f, "boolean assertion %s for the '" BLUE "%s" RESET "' expression.\n",
-        colored_status,
+        COLORED_STATUS(self->result),
         STRING_OR_PLACEHOLDER(self->data.boolean_expression_representation));
     break;
   }

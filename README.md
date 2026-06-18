@@ -31,12 +31,12 @@ git clone https://github.com/nasccped/acrt
 cp acrt/src path/to/your_code/acrt -r && rm -rf acrt;
 cd path/to/your_code
 ```
-- compile (with all `c` file) and run:
+- compile (with all `c` files) and run:
 ```sh
 gcc $(find acrt/*.c) your_file.c -o your_output && your_output;
 ```
 
-> [!NOTES]
+> [!NOTE]
 >
 > 1. Mentioned code above is `sh` compatible. Consider using a Makefile for 'auto-building'.
 > 2. There's also local examples and tests which you can run (requires `make`):

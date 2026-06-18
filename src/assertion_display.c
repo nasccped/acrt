@@ -10,6 +10,7 @@
 #define RESET GEN_COLOR(0)
 #define RED GEN_COLOR(91)
 #define GREEN GEN_COLOR(92)
+#define YELLOW GEN_COLOR(93)
 #define BLUE GEN_COLOR(94)
 #define WHITE GEN_COLOR(97)
 
@@ -40,9 +41,10 @@ void display_assertion_wrapper(assertion_wrapper_t *self) {
 void __print_tag(assertion_wrapper_t *self) {
   if (!self)
     return;
-  fprintf(self->result ? stdout : stderr, "%s[%s - %s: %d]:%s ", WHITE,
+  fprintf(self->result ? stdout : stderr,
+          WHITE "[%s - %s: " YELLOW "%d" WHITE "]:" RESET " ",
           STRING_OR_PLACEHOLDER(self->group_name),
-          STRING_OR_PLACEHOLDER(self->file_name), self->line_number, RESET);
+          STRING_OR_PLACEHOLDER(self->file_name), self->line_number);
 }
 
 void __print_kind_description(assertion_wrapper_t *self) {

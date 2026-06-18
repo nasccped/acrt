@@ -8,7 +8,7 @@
 #include <string.h>
 
 /* Defalt group name for the 'acrt_t' struct. */
-#define DEFAULT_ACRT_NAME "UNAMMED ACRT"
+#define DEFAULT_ACRT_NAME "UNNAMED ACRT"
 
 /* Block that's ran when acrt should exit the program process. */
 #define ACRT_DISPLAY_AND_EXIT()                                                \

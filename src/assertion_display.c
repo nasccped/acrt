@@ -2,22 +2,24 @@
 #include <stdio.h>
 #include <string.h>
 
-/* Turn literals into string. */
-#define __AS_STR(X) #X
-
 #define STRING_OR_PLACEHOLDER(STRING) (STRING) ? (STRING) : "???"
 
-/* Generates a color escape based on a give code. */
-#define GEN_COLOR(CODE) "\x1b[" __AS_STR(CODE) "m"
+/* Generates a color escape based on a given code. */
+#define __GEN_COLOR(CODE) "\x1b[" #CODE "m"
 
-#define RESET GEN_COLOR(0)
-#define RED GEN_COLOR(91)
-#define GREEN GEN_COLOR(92)
-#define BLUE GEN_COLOR(94)
-#define WHITE GEN_COLOR(97)
+#define RESET __GEN_COLOR(0)
+#define RED __GEN_COLOR(91)
+#define GREEN __GEN_COLOR(92)
+#define YELLOW __GEN_COLOR(93)
+#define BLUE __GEN_COLOR(94)
+#define WHITE __GEN_COLOR(97)
 
-#define FAILED_RED RED "failed" RESET
-#define PASSED_GREEN GREEN "passed" RESET
+/* Gets a colored status based on a bool-like result. */
+#define COLORED_STATUS(RESULT)                                                 \
+  (RESULT) ? GREEN "passed" RESET : RED "failed" RESET
+
+/* Gets the file destionation based on a bool-like result. */
+#define GET_FILE(RESULT) (RESULT) ? stdout : stderr
 
 /* Cool tag printing for the provided wrapper inner data. */
 void __print_tag(assertion_wrapper_t *);
@@ -43,22 +45,22 @@ void display_assertion_wrapper(assertion_wrapper_t *self) {
 void __print_tag(assertion_wrapper_t *self) {
   if (!self)
     return;
-  fprintf(self->result ? stdout : stderr, "%s[%s - %s: %d]:%s ", WHITE,
+  fprintf(self->result ? stdout : stderr,
+          WHITE "[%s - %s: " YELLOW "%d" WHITE "]:" RESET " ",
           STRING_OR_PLACEHOLDER(self->group_name),
-          STRING_OR_PLACEHOLDER(self->file_name), self->line_number, RESET);
+          STRING_OR_PLACEHOLDER(self->file_name), self->line_number);
 }
 
 void __print_kind_description(assertion_wrapper_t *self) {
   if (!self)
     return;
-  FILE *f = self->result ? stdout : stderr;
-  const char *colored_status = self->result ? PASSED_GREEN : FAILED_RED;
   switch (self->kind) {
   case BOOLEAN_EXPRESSION:
-    fprintf(f, "boolean assertion %s for the '%s%s%s' expression.\n",
-            colored_status, BLUE,
-            STRING_OR_PLACEHOLDER(self->data.boolean_expression_representation),
-            WHITE);
+    fprintf(
+        GET_FILE(self->result),
+        "boolean assertion %s for the '" BLUE "%s" RESET "' expression.\n",
+        COLORED_STATUS(self->result),
+        STRING_OR_PLACEHOLDER(self->data.boolean_expression_representation));
     break;
   }
 }
@@ -66,7 +68,6 @@ void __print_kind_description(assertion_wrapper_t *self) {
 void __print_result_description(assertion_wrapper_t *self) {
   if (!self)
     return;
-  FILE *f = self->result ? stdout : stderr;
   switch (self->kind) {
   case BOOLEAN_EXPRESSION:
     // boolean expression don't need to display since they just return

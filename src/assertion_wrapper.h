@@ -1,5 +1,5 @@
-#ifndef _EXPRESSION_WRAPPER_H_
-#define _EXPRESSION_WRAPPER_H_
+#ifndef _ASSERTION_WRAPPER_H_
+#define _ASSERTION_WRAPPER_H_
 
 /* Kind of the current wrapper (used to easy display with 'data' union). */
 typedef enum {

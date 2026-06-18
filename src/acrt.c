@@ -8,41 +8,47 @@
 #include <string.h>
 
 /* Defalt group name for the 'acrt_t' struct. */
-#define DEFAULT_ACRT_NAME "UNAMMED ACRT"
+#define DEFAULT_ACRT_NAME "UNNAMED ACRT"
 
-/* If the current assertion shouldn't be ran:
- * - pointer is null
- * - previous was fail and 'on_fail' is 'SKIP_ASSERTIONS' */
-int __acrt_should_not_be_ran(acrt_t *);
+/* Block that's ran when acrt should exit the program process. */
+#define ACRT_DISPLAY_AND_EXIT()                                                \
+  do {                                                                         \
+    fprintf(stderr, "\n'acrt_t->on_fail' was set to 'EXIT_PROGRAM'.\n"         \
+                    "exiting...\n\n");                                         \
+    fflush(stderr);                                                            \
+    exit(1);                                                                   \
+  } while (0)
+
+/* If the current assertion should be run:
+ * - pointer is not null
+ * - previous wasn't fail or 'on_fail' is set to 'CONTINUE_ASSERTIONS' */
+int __acrt_should_run(acrt_t *);
+
+/* If the current assertion should be displayed:
+ * - pointer is not null
+ * - display_mode is set to 'DISPLAY_ALL_ASSERTIONS' or ('DISPLAY_ERRORS_ONLY' +
+ *   result is err) */
+int __acrt_should_display(acrt_t *, int);
+
+/* If the current state of acrt pointer requires proccess to be terminated. */
+int __acrt_should_exit(acrt_t *);
 
 /* Updates a given acrt pointer based on a result integer. */
 void __acrt_update(acrt_t *, int);
 
-/* Exit the program with a default message if 'on_fail' is set to 'EXIT_PROGRAM'
- * and previous assertion was failed. */
-void __acrt_fail_exit(acrt_t *);
-
 void __acrt_run_bool_assertion(acrt_t *self, const char *file,
                                const unsigned int line, const char *expr,
                                const int result) {
-  if (__acrt_should_not_be_ran(self))
+  if (!__acrt_should_run(self))
     return;
   __acrt_update(self, result);
-  switch (self->display_mode) {
-  case NO_ASSERTION_DISPLAY:
-    break;
-  case DISPLAY_ERRORS_ONLY:
-    if (result) {
-      break;
-    }
-    __attribute__((fallthrough));
-  case DISPLAY_ALL_ASSERTIONS:
+  if (__acrt_should_display(self, result)) {
     assertion_wrapper_t w =
         assertion_wrapper_new_bool(file, line, expr, self->name, result);
     display_assertion_wrapper(&w);
-    break;
   }
-  __acrt_fail_exit(self);
+  if (__acrt_should_exit(self))
+    ACRT_DISPLAY_AND_EXIT();
 }
 
 acrt_t acrt_new() {
@@ -73,9 +79,19 @@ void acrt_set_on_fail(acrt_t *self, __acrt_on_fail_t on_fail) {
     self->on_fail = on_fail;
 }
 
-int __acrt_should_not_be_ran(acrt_t *self) {
-  return (!self) || (self->previous == ASSERTION_WAS_FAILED &&
-                     self->on_fail == SKIP_ASSERTIONS);
+int __acrt_should_run(acrt_t *self) {
+  return (self) && (self->on_fail == CONTINUE_ASSERTIONS ||
+                    self->previous != ASSERTION_WAS_FAILED);
+}
+
+int __acrt_should_display(acrt_t *self, int result) {
+  return (self) && (self->display_mode == DISPLAY_ALL_ASSERTIONS ||
+                    (self->display_mode == DISPLAY_ERRORS_ONLY && !result));
+}
+
+int __acrt_should_exit(acrt_t *self) {
+  return (self) && (self->on_fail == EXIT_PROGRAM &&
+                    self->previous == ASSERTION_WAS_FAILED);
 }
 
 void __acrt_update(acrt_t *self, int success) {
@@ -83,21 +99,4 @@ void __acrt_update(acrt_t *self, int success) {
     return;
   assertion_counter_update(&self->counter, success);
   self->previous = success ? ASSERTION_WAS_PASSED : ASSERTION_WAS_FAILED;
-}
-
-void __acrt_fail_exit(acrt_t *self) {
-  if (!self) {
-    fprintf(stderr, "\n'__acrt_fail_exit' function was called but 'acrt' "
-                    "pointer is null.\n"
-                    "exiting anyway...\n\n");
-    fflush(stderr);
-    exit(1);
-  } else if (self->on_fail == EXIT_PROGRAM &&
-             self->previous == ASSERTION_WAS_FAILED) {
-    fprintf(stderr, "\n'acrt_t->on_fail' was set to 'EXIT_PROGRAM' "
-                    "('acrt_set_on_fail' to change behavior).\n"
-                    "exiting...\n\n");
-    fflush(stderr);
-    exit(1);
-  }
 }

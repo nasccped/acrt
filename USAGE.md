@@ -23,6 +23,19 @@ Just include the `acrt.h` and it's done!
 // code ...
 ```
 
+> [!IMPORTANT]
+>
+> Even if including only `acrt.h`, passing c files to the compiler is required since they hold all
+> functions implementation:
+> ```sh
+> # this fails
+> gcc acrt.c my_main.c -o result.exe;
+> # this works
+> gcc acrt.c assertion_counter.c assertion_display.c assertion_wrapper.c my_main.c -o result.exe
+> ```
+>
+> Consider building a `Makefile` or a `nob.h` for your project.
+
 ### The `acrt_t` and it's macros
 
 All assertion stuff is done through an `acrt_t` object. There's no need to build different assert

@@ -10,10 +10,10 @@
 /* Defalt group name for the 'acrt_t' struct. */
 #define DEFAULT_ACRT_NAME "UNAMMED ACRT"
 
-/* If the current assertion shouldn't be ran:
- * - pointer is null
- * - previous was fail and 'on_fail' is 'SKIP_ASSERTIONS' */
-int __acrt_should_not_be_ran(acrt_t *);
+/* If the current assertion should be run:
+ * - pointer is not null
+ * - previous wasn't fail or 'on_fail' is set to 'CONTINUE_ASSERTIONS' */
+int __acrt_should_run(acrt_t *);
 
 /* Updates a given acrt pointer based on a result integer. */
 void __acrt_update(acrt_t *, int);
@@ -25,7 +25,7 @@ void __acrt_fail_exit(acrt_t *);
 void __acrt_run_bool_assertion(acrt_t *self, const char *file,
                                const unsigned int line, const char *expr,
                                const int result) {
-  if (__acrt_should_not_be_ran(self))
+  if (!__acrt_should_run(self))
     return;
   __acrt_update(self, result);
   switch (self->display_mode) {
@@ -73,9 +73,9 @@ void acrt_set_on_fail(acrt_t *self, __acrt_on_fail_t on_fail) {
     self->on_fail = on_fail;
 }
 
-int __acrt_should_not_be_ran(acrt_t *self) {
-  return (!self) || (self->previous == ASSERTION_WAS_FAILED &&
-                     self->on_fail == SKIP_ASSERTIONS);
+int __acrt_should_run(acrt_t *self) {
+  return (self) && (self->on_fail == CONTINUE_ASSERTIONS ||
+                    self->previous != ASSERTION_WAS_FAILED);
 }
 
 void __acrt_update(acrt_t *self, int success) {

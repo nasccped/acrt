@@ -5,17 +5,21 @@
 #define STRING_OR_PLACEHOLDER(STRING) (STRING) ? (STRING) : "???"
 
 /* Generates a color escape based on a given code. */
-#define GEN_COLOR(CODE) "\x1b[" #CODE "m"
+#define __GEN_COLOR(CODE) "\x1b[" #CODE "m"
 
-#define RESET GEN_COLOR(0)
-#define RED GEN_COLOR(91)
-#define GREEN GEN_COLOR(92)
-#define YELLOW GEN_COLOR(93)
-#define BLUE GEN_COLOR(94)
-#define WHITE GEN_COLOR(97)
+#define RESET __GEN_COLOR(0)
+#define RED __GEN_COLOR(91)
+#define GREEN __GEN_COLOR(92)
+#define YELLOW __GEN_COLOR(93)
+#define BLUE __GEN_COLOR(94)
+#define WHITE __GEN_COLOR(97)
 
+/* Gets a colored status based on a bool-like result. */
 #define COLORED_STATUS(RESULT)                                                 \
   (RESULT) ? GREEN "passed" RESET : RED "failed" RESET
+
+/* Gets the file destionation based on a bool-like result. */
+#define GET_FILE(RESULT) (RESULT) ? stdout : stderr
 
 /* Cool tag printing for the provided wrapper inner data. */
 void __print_tag(assertion_wrapper_t *);
@@ -50,11 +54,11 @@ void __print_tag(assertion_wrapper_t *self) {
 void __print_kind_description(assertion_wrapper_t *self) {
   if (!self)
     return;
-  FILE *f = self->result ? stdout : stderr;
   switch (self->kind) {
   case BOOLEAN_EXPRESSION:
     fprintf(
-        f, "boolean assertion %s for the '" BLUE "%s" RESET "' expression.\n",
+        GET_FILE(self->result),
+        "boolean assertion %s for the '" BLUE "%s" RESET "' expression.\n",
         COLORED_STATUS(self->result),
         STRING_OR_PLACEHOLDER(self->data.boolean_expression_representation));
     break;
@@ -64,7 +68,6 @@ void __print_kind_description(assertion_wrapper_t *self) {
 void __print_result_description(assertion_wrapper_t *self) {
   if (!self)
     return;
-  FILE *f = self->result ? stdout : stderr;
   switch (self->kind) {
   case BOOLEAN_EXPRESSION:
     // boolean expression don't need to display since they just return

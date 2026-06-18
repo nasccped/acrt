@@ -55,10 +55,10 @@ void __print_kind_description(assertion_wrapper_t *self) {
   const char *colored_status = self->result ? PASSED_GREEN : FAILED_RED;
   switch (self->kind) {
   case BOOLEAN_EXPRESSION:
-    fprintf(f, "boolean assertion %s for the '%s%s%s' expression.\n",
-            colored_status, BLUE,
-            STRING_OR_PLACEHOLDER(self->data.boolean_expression_representation),
-            WHITE);
+    fprintf(
+        f, "boolean assertion %s for the '" BLUE "%s" RESET "' expression.\n",
+        colored_status,
+        STRING_OR_PLACEHOLDER(self->data.boolean_expression_representation));
     break;
   }
 }

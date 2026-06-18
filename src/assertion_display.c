@@ -69,6 +69,8 @@ void __print_result_description(assertion_wrapper_t *self) {
   FILE *f = self->result ? stdout : stderr;
   switch (self->kind) {
   case BOOLEAN_EXPRESSION:
+    // boolean expression don't need to display since they just return
+    // bool-like values (0 or 1).
     break;
   }
 }

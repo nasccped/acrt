@@ -11,7 +11,7 @@ The `acrt` library 101 (at [basics](./examples/01-basics.c) example).
 ### Including
 
 `acrt` is a libray packed into a single header, the `acrt.h`. This approach allows the features
-usage without [include hell][^include hell] concern:
+usage without include hell concern:
 
 > - I need the `int_type`, so I'll include the `my_int.h`
 > - I need the `string_type`, so I'll include the `my_str.h`
@@ -78,7 +78,3 @@ acrt_macro(acrt);
 
 Since `acrt_new` returns a struct literal (which also holds only `const pointers`), there's no need
 to use `free` on it or any of it's inner fields _(on the current version, actually)_.
-
-[^include hell]: 'include hell' is a term in C and C++ development describing a situation where
-  header files have excessive, circular, or unnecessary dependencies, causing changes in a single
-  header to trigger the recompilation of the entire codebase.

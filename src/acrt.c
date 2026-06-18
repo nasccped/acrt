@@ -15,6 +15,12 @@
  * - previous wasn't fail or 'on_fail' is set to 'CONTINUE_ASSERTIONS' */
 int __acrt_should_run(acrt_t *);
 
+/* If the current assertion should be displayed:
+ * - pointer is not null
+ * - display_mode is set to 'DISPLAY_ALL_ASSERTIONS' or ('DISPLAY_ERRORS_ONLY' +
+ *   result is err) */
+int __acrt_should_display(acrt_t *, int);
+
 /* Updates a given acrt pointer based on a result integer. */
 void __acrt_update(acrt_t *, int);
 
@@ -28,19 +34,10 @@ void __acrt_run_bool_assertion(acrt_t *self, const char *file,
   if (!__acrt_should_run(self))
     return;
   __acrt_update(self, result);
-  switch (self->display_mode) {
-  case NO_ASSERTION_DISPLAY:
-    break;
-  case DISPLAY_ERRORS_ONLY:
-    if (result) {
-      break;
-    }
-    __attribute__((fallthrough));
-  case DISPLAY_ALL_ASSERTIONS:
+  if (__acrt_should_display(self, result)) {
     assertion_wrapper_t w =
         assertion_wrapper_new_bool(file, line, expr, self->name, result);
     display_assertion_wrapper(&w);
-    break;
   }
   __acrt_fail_exit(self);
 }
@@ -76,6 +73,11 @@ void acrt_set_on_fail(acrt_t *self, __acrt_on_fail_t on_fail) {
 int __acrt_should_run(acrt_t *self) {
   return (self) && (self->on_fail == CONTINUE_ASSERTIONS ||
                     self->previous != ASSERTION_WAS_FAILED);
+}
+
+int __acrt_should_display(acrt_t *self, int result) {
+  return (self) && (self->display_mode == DISPLAY_ALL_ASSERTIONS ||
+                    (self->display_mode == DISPLAY_ERRORS_ONLY && !result));
 }
 
 void __acrt_update(acrt_t *self, int success) {

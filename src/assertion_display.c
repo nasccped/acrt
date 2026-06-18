@@ -2,13 +2,10 @@
 #include <stdio.h>
 #include <string.h>
 
-/* Turn literals into string. */
-#define __AS_STR(X) #X
-
 #define STRING_OR_PLACEHOLDER(STRING) (STRING) ? (STRING) : "???"
 
-/* Generates a color escape based on a give code. */
-#define GEN_COLOR(CODE) "\x1b[" __AS_STR(CODE) "m"
+/* Generates a color escape based on a given code. */
+#define GEN_COLOR(CODE) "\x1b[" #CODE "m"
 
 #define RESET GEN_COLOR(0)
 #define RED GEN_COLOR(91)

@@ -2,6 +2,12 @@
 
 acrt library changelog.
 
+## v0.0.3
+
+- docs:
+  - cover inner values handling
+  - cover boolean/expression assertions
+
 ## v0.0.2
 
 - docs: a better documentation coverage

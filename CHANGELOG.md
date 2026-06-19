@@ -2,8 +2,6 @@
 
 acrt library changelog.
 
-<<<<<<< HEAD
-=======
 ## v0.0.2
 
 - docs: a better documentation coverage
@@ -15,7 +13,6 @@ acrt library changelog.
   - add readme samples to test coverage
   - add `default_values` mentioned at [usage](./USAGE.md) page to test coverage
 
->>>>>>> dev
 ## v0.0.1 first patch release
 
 - basic boolean assertion (works for bool-like data such as integers, pointer, etc)

@@ -3,6 +3,7 @@
 This page provides usage help and examples (strongly based on [examples](./examples) files):
 
 - [Basic](#basics)
+- [Inner values](#inner-values)
 
 ## Basics
 
@@ -91,3 +92,80 @@ acrt_macro(acrt);
 
 Since `acrt_new` returns a struct literal (which also holds only `const pointers`), there's no need
 to use `free` on it or any of it's inner fields _(on the current version, actually)_.
+
+## Inner values
+
+> Examples at [02-inner_values.c](./examples/02-inner_values.c).
+
+The `acrt_t` contains inner values that are checked and updated at runtime. You can change it
+manually by the `struct_variable.field = ...` syntax but this can lead to inconsistent behavior.
+Use the api functions instead:
+
+### Group name
+
+When doing assertions, the process can be display at `stdout`/`stderr` (more details at
+[printing enums](#printing-enums)). The content will looks like this:
+
+```txt
+[<GROUP_NAME> - <FILE_NAME>: <LINE_NUMBER>]: <MACRO_CALL_DESCRIPTION>
+                                             <OPTIONAL_VALUES_DESCRIPTION>
+```
+
+All these fields are picked during macro call (so, they're immutable). But the `<GROUP_NAME>`
+refers to the `acrt_t` context, like:
+
+- `acrt_bool(acrt, is_prime(2))`
+- `acrt_bool(acrt, is_palindrome("natan"))`
+- `...`
+
+So, it would be nice if you could change the assertion context name.
+
+To do so, you can use the `acrt_set_name` function which takes a pointer to the `acrt_t` struct and
+a string literal:
+```c
+acrt_set_name(&acrt, "custom name");
+```
+
+This function gonna fail if any of pointer equals to NULL or string length is equals to zero. The
+default group name is `ACRT UNNAMED`.
+
+### Printing enums
+
+By default, the `acrt_t` comes with `display_mode = DISPLAY_ERRORS_ONLY`. So, all success
+assertions won't be displayed unless you specify to do so using the `acrt_set_display_variant`
+function:
+```c
+acrt_set_display_variant(&acrt, <VARIANT>);
+```
+
+Available variants:
+- `DISPLAY_ERRORS_ONLY`
+- `DISPLAY_ALL_ASSERTIONS` _(even when success)_
+- `NO_ASSERTION_DISPLAY` _(even if error)_
+
+### Exit process
+
+By default, the `acrt_t` forces the program exit when reaching a failed assertion. You can change
+it by using the `acrt_set_on_fail` function:
+```c
+acrt_set_on_fail(&acrt, <VARIANT>);
+```
+Available variants:
+- `EXIT_PROGRAM` _(with error status code - `1`)_
+- `SKIP_ASSERTIONS` _(skip all other assertions)_
+- `CONTINUE_ASSERTIONS` _(continues the program normally)_
+
+### Usage tip
+
+> [!TIP]
+>
+> If a very custom `acrt_t` is required, consider packing it within a function:
+> ```c
+> acrt_t my_acrt() {
+>   acrt_t acrt = acrt_new();
+>   acrt_set_name(&acrt, "my custom name");
+>   acrt_set_display_variant(&acrt, DISPLAY_ALL_ASSERTIONS);
+>   acrt_set_on_fail(&acrt, CONTINUE_ASSERTIONS);
+>   return acrt;
+> }
+> ```

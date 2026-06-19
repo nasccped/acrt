@@ -4,6 +4,8 @@ This page provides usage help and examples (strongly based on [examples](./examp
 
 - [Basic](#basics)
 - [Inner values](#inner-values)
+- [Assertions](#assertions)
+  - [Boolean assertion](#boolean-assertion)
 
 ## Basics
 
@@ -169,3 +171,23 @@ Available variants:
 >   return acrt;
 > }
 > ```
+
+## Assertions
+
+There's currently one kind of assertion:
+
+### Boolean assertion
+
+> Example at [03-boolean_assertions.c](./examples/03-boolean_assertions.c).
+
+The boolean assertion is done by the `acrt_bool` macro call:
+```c
+acrt_bool(acrt, <VALUE>);
+```
+
+Not only `bool`, but any `bool` compatible type can be asserted:
+- integer such as `0`, `1`, `128`, `...`
+- pointers such as `NULL`, `"string literals"`, `malloc_value`
+- expressions such as `!0`, `1 == 1`, `...`
+
+This allows a similar approach with the `assert` macro from the `assert.h` header.

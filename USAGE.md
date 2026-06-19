@@ -127,7 +127,7 @@ acrt_set_name(&acrt, "custom name");
 ```
 
 This function gonna fail if any of pointer equals to NULL or string length is equals to zero. The
-default group name is `ACRT UNNAMED`.
+default group name is `UNNAMED ACRT`.
 
 ### Printing enums
 

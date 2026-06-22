@@ -47,11 +47,14 @@ typedef struct {
   assertion_counter_t counter;
 } acrt_t;
 
-/* Runs the assertion as boolean expression. */
-void __acrt_run_bool_assertion(acrt_t *, const char *, const unsigned int,
-                               const char *, const int);
+/* Runs the assertion as boolean expression. Returns an integer at the end
+ * meaning the success of assertion. */
+int __acrt_run_bool_assertion(acrt_t *, const char *, const unsigned int,
+                              const char *, const int);
 
-/* Runs a boolean assertion. */
+/* Runs a boolean assertion and returns an integer where:
+ * - '0' means assertion failed
+ * - '1' means assertion passed */
 #define acrt_bool(STRUCT, EXPR)                                                \
   __acrt_run_bool_assertion(&(STRUCT), __FILE__, __LINE__, #EXPR, (!!(EXPR)))
 

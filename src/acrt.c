@@ -36,11 +36,11 @@ int __acrt_should_exit(acrt_t *);
 /* Updates a given acrt pointer based on a result integer. */
 void __acrt_update(acrt_t *, int);
 
-void __acrt_run_bool_assertion(acrt_t *self, const char *file,
-                               const unsigned int line, const char *expr,
-                               const int result) {
+int __acrt_run_bool_assertion(acrt_t *self, const char *file,
+                              const unsigned int line, const char *expr,
+                              const int result) {
   if (!__acrt_should_run(self))
-    return;
+    return result;
   __acrt_update(self, result);
   if (__acrt_should_display(self, result)) {
     assertion_wrapper_t w =
@@ -49,6 +49,7 @@ void __acrt_run_bool_assertion(acrt_t *self, const char *file,
   }
   if (__acrt_should_exit(self))
     ACRT_DISPLAY_AND_EXIT();
+  return result;
 }
 
 acrt_t acrt_new() {

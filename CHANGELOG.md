@@ -2,6 +2,10 @@
 
 acrt library changelog.
 
+## v0.0.4
+
+- return integer as assertion result
+
 ## v0.0.3
 
 - docs:

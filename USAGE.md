@@ -6,6 +6,7 @@ This page provides usage help and examples (strongly based on [examples](./examp
 - [Inner values](#inner-values)
 - [Assertions](#assertions)
   - [Boolean assertion](#boolean-assertion)
+- [Returned values](#returned-values)
 
 ## Basics
 
@@ -191,3 +192,33 @@ Not only `bool`, but any `bool` compatible type can be asserted:
 - expressions such as `!0`, `1 == 1`, `...`
 
 This allows a similar approach with the `assert` macro from the `assert.h` header.
+
+## Returned values
+
+Since assertions are _boolean-like_ operations, an integer is returned from an assertion macro and
+can be used across the code:
+```c
+int conditional_int;
+// a lot of code...
+if (acrt_bool(acrt, conditional_int)) {
+  // when condition is true
+} else {
+  // otherwise
+}
+```
+
+The integer that is returned is the same passed as `expression`, so:
+```c
+// this
+if (acrt_bool(acrt, conditional)) {
+  // ...
+}
+
+// does the same as this
+acrt_bool(acrt, conditional);
+if (conditional) {
+  // ...
+}
+```
+
+Other examples available at [04-take_result.c](./examples/04-take_result.c).

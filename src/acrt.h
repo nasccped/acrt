@@ -113,10 +113,20 @@ typedef enum {
 
 /* Acrt private context to handle. */
 struct __acrt_context {
+  /* Naming related context. */
   struct __acrt_context_name name;
+
+  /* On fail action related context. */
   struct __acrt_context_on_fail on_fail;
+
+  /* Assertion counting related context. */
   struct __acrt_counting counting;
+
+  /* Displaying related content. */
   acrt_display_mode_t display_mode;
+
+  /* If the latest assertion was failed. */
+  int latest_was_failed;
 };
 
 /* Acrt entrypoint. */

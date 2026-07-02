@@ -1,96 +1,114 @@
+#include <stdlib.h>
+#include <string.h>
+
 #include "acrt.h"
-#include <stdint.h>
 
-/* Default state for the on fail context. */
-static struct __acrt_context_on_fail ON_FAIL_DEFAULT_STATE = {
-    .kind = ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE, .action.exit_code = 1};
+typedef struct __acrt_context global_context_t;
+typedef struct __acrt_counting counting_t;
+typedef struct __acrt_context_name context_name_t;
+typedef struct __acrt_context_on_fail on_fail_t;
 
-/* Default state for the conting field. */
-static struct __acrt_counting COUNTING_DEFAULT_STATE = {0};
+// Returns the context name when it somehow leads to NULL pointer.
+#define CONTEXT_NAME_WHEN_NULL "NULL CONTEXT"
 
-/* Returns the default __acrt_context_name struct. */
-struct __acrt_context_name build_default_context_name(const char *,
-                                                      const char *);
+// Builds a __acrt_context_name struct with default values.
+#define CONTEXT_NAME_BUILD_DEFAULT(FILE, FUNC)                                 \
+  (context_name_t) {                                                           \
+    .kind = CONTEXT_NAME_USE_FILE_NAME, .file = (FILE), .function = (FUNC),    \
+    .custom = NULL                                                             \
+  }
 
-/* Macro used to avoid repetitive if (!pointer) return; */
-#define IF_TRUE(EXPR, ACTION_BLOCK)                                            \
-  if ((EXPR))                                                                  \
-  ACTION_BLOCK
+// Counting default state.
+#define COUNTING_DEFAULT_STATE (counting_t){0}
+
+// On fail default state.
+#define ON_FAIL_DEFAULT_STATE                                                  \
+  (on_fail_t){.kind = ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE,                     \
+              .action.exit_code = 1}
+
+// Default state for display mode.
+#define DISPLAY_MODE_DEFAULT_STATE DISPLAY_MODE_FAILED_ONLY
+
+// Takes the 'struct __acrt_context_on_fail' from the 'self' pointer.
+#define UNWRAP_ON_FAIL(POINTER) &(POINTER)->__context.on_fail
 
 acrt_t __acrt_default(const char *file_name, const char *function_name) {
-  struct __acrt_context context = {
-      .name = build_default_context_name(file_name, function_name),
+  global_context_t context = {
+      .name = CONTEXT_NAME_BUILD_DEFAULT(file_name, function_name),
       .counting = COUNTING_DEFAULT_STATE,
-      .display_mode = DISPLAY_MODE_FAILED_ONLY,
+      .display_mode = DISPLAY_MODE_DEFAULT_STATE,
       .on_fail = ON_FAIL_DEFAULT_STATE};
+
   return (acrt_t){.__context = context};
 }
 
-void acrt_set_on_fail_exit_program(acrt_t *self, int code) {
-  IF_TRUE(self, {
-    self->__context.on_fail.kind = ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE;
-    self->__context.on_fail.action.exit_code = code;
-  })
+void acrt_on_fail_continue_assertions(acrt_t *self) {
+  if (!self)
+    return;
+
+  self->__context.on_fail.kind = ON_FAIL_CONTINUE_ASSERTIONS;
 }
 
-void acrt_set_on_fail_ignore_remaining_assertions(acrt_t *self) {
-  IF_TRUE(self, {
-    self->__context.on_fail.kind = ON_FAIL_IGNORE_REMAINING_ASSERTIONS;
-  })
+void acrt_on_fail_exit_program(acrt_t *self, int code) {
+  if (!self)
+    return;
+
+  on_fail_t *on_fail = UNWRAP_ON_FAIL(self);
+
+  on_fail->kind = ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE;
+  on_fail->action.exit_code = code;
 }
 
-void acrt_set_on_fail_continue_remaining_assertions(acrt_t *self) {
-  IF_TRUE(self, {
-    self->__context.on_fail.kind = ON_FAIL_CONTINUE_REMAINING_ASSERTIONS;
-  })
+void acrt_on_fail_print_counting_and_exit(acrt_t *self, int code) {
+  if (!self)
+    return;
+
+  on_fail_t *on_fail = UNWRAP_ON_FAIL(self);
+
+  on_fail->kind = ON_FAIL_PRINT_COUNTING_AND_EXIT_PROGRAM_WITH_EXIT_CODE;
+  on_fail->action.counting_and_exit.counting = &self->__context.counting;
+  on_fail->action.counting_and_exit.exit_code = code;
 }
 
-void acrt_set_on_fail_print_counting_and_exit_program(acrt_t *self, int code) {
-  IF_TRUE(self, {
-    struct __acrt_context_on_fail *fail = &self->__context.on_fail;
-    struct __acrt_counting *counting = &self->__context.counting;
-    fail->kind = ON_FAIL_PRINT_COUNTING_AND_EXIT_PROGRAM_WITH_EXIT_CODE;
-    fail->action.counting_and_exit.counting = counting;
-    fail->action.counting_and_exit.exit_code = code;
-  })
+void acrt_on_fail_run_callback_and_exit(acrt_t *self, void (*callback)(void *),
+                                        void *arg, int code) {
+  if (!self || !callback)
+    return;
+
+  on_fail_t *on_fail = UNWRAP_ON_FAIL(self);
+  on_fail->kind = ON_FAIL_RUN_CALLBACK_AND_EXIT_WITH_EXIT_CODE;
+  on_fail->action.callback_and_exit.callback_function = callback;
+  on_fail->action.callback_and_exit.arg = arg;
+  on_fail->action.callback_and_exit.exit_code = code;
 }
 
-/* Run function callback and exit the program with the exit code. */
-void acrt_set_on_fail_run_callback_and_exit_program(acrt_t *self,
-                                                    void (*callback)(),
-                                                    int code) {
-  IF_TRUE(self, {
-    self->__context.on_fail.kind = ON_FAIL_RUN_CALLBACK_AND_EXIT_WITH_EXIT_CODE;
-    self->__context.on_fail.action.callback_and_exit.callback_function =
-        callback;
-    self->__context.on_fail.action.callback_and_exit.exit_code = code;
-  })
+void acrt_on_fail_skip_assertions(acrt_t *self) {
+  if (!self)
+    return;
+
+  self->__context.on_fail.kind = ON_FAIL_SKIP_FUTURE_ASSERTIONS;
 }
 
-void acrt_set_display_mode(acrt_t *self, acrt_display_mode_t mode) {
-  IF_TRUE(self, self->__context.display_mode = mode);
+void acrt_set_name_to_custom(acrt_t *self, const char *name) {
+  if (!self || !name || !strlen(name))
+    return;
+
+  context_name_t *cname = &self->__context.name;
+
+  cname->kind = CONTEXT_NAME_USE_CUSTOM_NAME;
+  cname->custom = name;
 }
 
-void acrt_set_context_name_to_file(acrt_t *self) {
-  IF_TRUE(self, self->__context.name.kind = CONTEXT_NAME_USE_FILE_NAME);
+void acrt_set_name_to_file(acrt_t *self) {
+  if (!self)
+    return;
+
+  self->__context.name.kind = CONTEXT_NAME_USE_FILE_NAME;
 }
 
-void acrt_set_context_name_to_function(acrt_t *self) {
-  IF_TRUE(self, self->__context.name.kind = CONTEXT_NAME_USE_FUNCTION_NAME);
-}
+void acrt_set_name_to_function(acrt_t *self) {
+  if (!self)
+    return;
 
-/* Set the acrt pointer context name to a custom char pointer. */
-void acrt_set_context_name_to_custom(acrt_t *self, const char *name) {
-  IF_TRUE(self && name, {
-    self->__context.name.kind = CONTEXT_NAME_USE_CUSTOM_NAME;
-    self->__context.name.name.custom = name;
-  });
-}
-
-/* Returns the default __acrt_context_name struct. */
-struct __acrt_context_name build_default_context_name(const char *file,
-                                                      const char *function) {
-  return (struct __acrt_context_name){
-      .kind = CONTEXT_NAME_USE_FILE_NAME,
-      .name = {.file = file, .function = function, .custom = NULL}};
+  self->__context.name.kind = CONTEXT_NAME_USE_FUNCTION_NAME;
 }

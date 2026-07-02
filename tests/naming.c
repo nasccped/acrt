@@ -53,7 +53,7 @@ int main(void) {
   else if (!assert_eq_str("cool", acrt.__context.name.custom))
     return 1;
   // if is null, actually...
-  else if (assert_pointer(TO_VOID_POINTER(acrt), 0))
+  else if (!assert_pointer(TO_VOID_POINTER(acrt), 0))
     return 1;
 
   return 0;

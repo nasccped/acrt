@@ -1,5 +1,5 @@
 CC=gcc
-FLAGS=-Wall -Wextra
+FLAGS=-Wall -Wextra -Werror
 SRC_DIR=./src
 SRC_FILES=$(wildcard $(SRC_DIR)/*.c)
 EXAMPLE_DIR=./examples

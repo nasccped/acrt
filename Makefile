@@ -10,10 +10,14 @@ TEST_FILES=$(wildcard $(TEST_DIR)/*.c)
 TEST_BINS=$(patsubst $(TEST_DIR)/%.c,$(OUT_DIR)/test-%.exe,$(TEST_FILES))
 OUT_DIR=./out
 
-# examples requirements
-build-example: $(OUT_DIR) $(EXAMPLE_BINS)
+all:
+	@echo build-examples: build all examples/files.c to out/ directory with exmp prefix
+	@echo build-tests: build all tests/files.c to out/ directory with test prefix
 
-build-test: $(OUT_DIR) $(TEST_BINS)
+# examples requirements
+build-examples: $(OUT_DIR) $(EXAMPLE_BINS)
+
+build-tests: $(OUT_DIR) $(TEST_BINS)
 
 # example build recipes
 $(OUT_DIR)/exmp-%.exe: $(EXAMPLE_DIR)/%.c $(SRC_FILES)
@@ -27,4 +31,4 @@ $(OUT_DIR)/test-%.exe: $(TEST_DIR)/%.c $(SRC_FILES)
 $(OUT_DIR):
 	mkdir $@
 
-.PHONY: build-example build-test
+.PHONY: build-examples build-tests

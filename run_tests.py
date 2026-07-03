@@ -52,8 +52,7 @@ class TestResult:
         if self.passed:
             print("[\x1b[92m passed \x1b[0m] {}".format(self.name), file = f)
         else:
-            print("[\x1b[91m failed \x1b[0m] {}".format(self.name), file = f)
-            print("output:", file = f)
+            print("[\x1b[91m failed \x1b[0m] {}:".format(self.name), end = "\n\n", file = f)
             print(self.output, file = f)
 
 class TestItem:

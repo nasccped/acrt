@@ -191,6 +191,9 @@ void acrt_on_fail_run_callback_and_exit(acrt_t *self, void (*callback)(void *),
 // Set 'on fail' field to skip future assertions if the current one fails.
 void acrt_on_fail_skip_assertions(acrt_t *self);
 
+// Reset the self counting pointer to it's initial state (zero items).
+void acrt_reset_counting(acrt_t *self);
+
 // Sets a custom name context to the self acrt pointer. The name parameter must
 // be a non-null/zero length string, otherwise, operation fails.
 void acrt_set_name_to_custom(acrt_t *self, const char *name);

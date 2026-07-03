@@ -97,6 +97,13 @@ void acrt_on_fail_skip_assertions(acrt_t *self) {
   self->__context.on_fail.kind = ON_FAIL_SKIP_FUTURE_ASSERTIONS;
 }
 
+void acrt_reset_counting(acrt_t *self) {
+  if (!self)
+    return;
+
+  self->__context.counting = (counting_t){0};
+}
+
 void acrt_set_name_to_custom(acrt_t *self, const char *name) {
   if (!self || !name || !strlen(name))
     return;

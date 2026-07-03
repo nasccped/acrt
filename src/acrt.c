@@ -42,6 +42,14 @@ acrt_t __acrt_default(const char *file_name, const char *function_name) {
   return (acrt_t){.__context = context};
 }
 
+// Set a new display mode the self acrt pointer.
+void acrt_display_mode(acrt_t *self, acrt_display_mode_t mode) {
+  if (!self)
+    return;
+
+  self->__context.display_mode = mode;
+}
+
 void acrt_on_fail_continue_assertions(acrt_t *self) {
   if (!self)
     return;

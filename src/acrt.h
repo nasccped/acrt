@@ -164,6 +164,9 @@ acrt_t __acrt_default(const char *, const char *);
 // still set a custom name by using 'acrt_set_name' function.
 #define ACRT_NEW() __acrt_default(__FILE__, __FUNCTION__)
 
+// Set a new display mode the self acrt pointer.
+void acrt_display_mode(acrt_t *self, acrt_display_mode_t mode);
+
 // Set 'on fail' field to continue future assertions (even if the current one
 // fails).
 void acrt_on_fail_continue_assertions(acrt_t *self);

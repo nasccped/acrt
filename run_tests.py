@@ -112,7 +112,7 @@ def display_missing_compilation_error(items: list[TestItem]):
     print("Some files weren't compiled yet:", end = "\n\n", file = sys.stderr)
     file_list = "\n".join([i.as_detailed_string() for i in items])
     print(file_list, end = "\n\n", file = sys.stderr)
-    print("Consider running `make build-test` before...", file = sys.stderr)
+    print("Consider running `make build-tests` before...", file = sys.stderr)
 
 def main():
     items = get_items()

@@ -33,29 +33,30 @@ struct __acrt_context_name {
       *custom;
 };
 
+// Which action to execute on failed assertions.
+enum __acrt_on_fail_kind {
+
+  // Exit the entire program with the provided exit code at 'action.exit_code'
+  // (default).
+  ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE,
+
+  // Ignore all remaining assertions.
+  ON_FAIL_SKIP_FUTURE_ASSERTIONS,
+
+  // Continue all assertions normally.
+  ON_FAIL_CONTINUE_ASSERTIONS,
+
+  // Print assertion counting and exit the program with the exit code.
+  ON_FAIL_PRINT_COUNTING_AND_EXIT_PROGRAM_WITH_EXIT_CODE,
+
+  // Run a callback function pointer + exit the program with the exit code.
+  ON_FAIL_RUN_CALLBACK_AND_EXIT_WITH_EXIT_CODE
+};
+
 // Action for failed assertions (tagged enum).
 struct __acrt_context_on_fail {
 
-  // Which action to execute.
-  enum {
-
-    // Exit the entire program with the provided exit code at 'action.exit_code'
-    // (default).
-    ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE,
-
-    // Ignore all remaining assertions.
-    ON_FAIL_SKIP_FUTURE_ASSERTIONS,
-
-    // Continue all assertions normally.
-    ON_FAIL_CONTINUE_ASSERTIONS,
-
-    // Print assertion counting and exit the program with the exit code.
-    ON_FAIL_PRINT_COUNTING_AND_EXIT_PROGRAM_WITH_EXIT_CODE,
-
-    // Run a callback function pointer + exit the program with the exit code.
-    ON_FAIL_RUN_CALLBACK_AND_EXIT_WITH_EXIT_CODE,
-
-  } kind;
+  enum __acrt_on_fail_kind kind;
 
   // Action inner data.
   union {

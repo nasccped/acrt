@@ -43,4 +43,11 @@ static char code_location[128];
                        (TITLE), CODE_LOCATION_LENGTH, ' ', (EXPECTED), (GOT)); \
   }
 
+#define ASSERT_EQ_CUSTOM(TITLE, EXPECTED, GOT, EQ_FUNC, TO_STR_FUNC)           \
+  if (!EQ_FUNC((EXPECTED), (GOT))) {                                           \
+    DISPLAY_AND_RETURN("%s assertion failed.\n%*cExpecting %s, got %s\n",      \
+                       (TITLE), CODE_LOCATION_LENGTH, ' ',                     \
+                       TO_STR_FUNC((EXPECTED)), TO_STR_FUNC((GOT)));           \
+  }
+
 #endif

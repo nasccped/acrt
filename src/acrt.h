@@ -178,7 +178,7 @@ int __acrt_run_boolean_assertion_from_pointer(acrt_t *self,
                                               void *pointer);
 
 // Creates a new acrt struct. The naming and counter is set to default. You can
-// still set a custom name by using 'acrt_set_name' function.
+// still set a custom name by using 'acrt_set_context_name' function.
 #define ACRT_NEW() __acrt_default(__FILE__, __FUNCTION__)
 
 // Runs a bool-like assertion.
@@ -233,12 +233,12 @@ void acrt_set_display_mode_to_quiet(acrt_t *self);
 
 // Sets a custom name context to the self acrt pointer. The name parameter must
 // be a non-null/zero length string, otherwise, operation fails.
-void acrt_set_name_to_custom(acrt_t *self, const char *name);
+void acrt_set_context_name_to_custom(acrt_t *self, const char *name);
 
 // Sets context name kind to 'CONTEXT_NAME_USE_FILE_NAME'.
-void acrt_set_name_to_file(acrt_t *self);
+void acrt_set_context_name_to_file(acrt_t *self);
 
 // Sets context name kind to 'CONTEXT_NAME_USE_FUNCTION_NAME'.
-void acrt_set_name_to_function(acrt_t *self);
+void acrt_set_context_name_to_function(acrt_t *self);
 
 #endif

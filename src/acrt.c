@@ -189,7 +189,7 @@ void acrt_set_display_mode_to_quiet(acrt_t *self) {
   self->__context.display_mode = DISPLAY_MODE_QUIET;
 }
 
-void acrt_set_name_to_custom(acrt_t *self, const char *name) {
+void acrt_set_context_name_to_custom(acrt_t *self, const char *name) {
   if (!self || !name || !strlen(name))
     return;
 
@@ -199,14 +199,14 @@ void acrt_set_name_to_custom(acrt_t *self, const char *name) {
   cname->custom = name;
 }
 
-void acrt_set_name_to_file(acrt_t *self) {
+void acrt_set_context_name_to_file(acrt_t *self) {
   if (!self)
     return;
 
   self->__context.name.kind = CONTEXT_NAME_USE_FILE_NAME;
 }
 
-void acrt_set_name_to_function(acrt_t *self) {
+void acrt_set_context_name_to_function(acrt_t *self) {
   if (!self)
     return;
 

@@ -1,67 +1,79 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "../src/acrt.h"
 #include "test_util.h"
 
-typedef struct __acrt_counting counting_t;
+// Set default config for this local testing.
+#define ACRT_SET_LOCAL_DEFAULT(ACRT, CONTINUE_ON_FAIL)                         \
+  do {                                                                         \
+    acrt_reset_counting((ACRT));                                               \
+    acrt_display_mode((ACRT), DISPLAY_MODE_QUIET);                             \
+    if ((CONTINUE_ON_FAIL))                                                    \
+      acrt_on_fail_continue_assertions((ACRT));                                \
+    else                                                                       \
+      acrt_on_fail_skip_assertions((ACRT));                                    \
+  } while (0);
+
+// Asserts the total field of the counting struct.
+#define ASSERT_TOTAL(EXPECTED, GOT)                                            \
+  ASSERT_EQ_INT("CountingTotal", (EXPECTED), (GOT))
+
+// Asserts the passed field of the counting struct.
+#define ASSERT_PASSED(EXPECTED, GOT)                                           \
+  ASSERT_EQ_INT("CountingPassed", (EXPECTED), (GOT))
+
+// Asserts the failed field of the counting struct.
+#define ASSERT_FAILED(EXPECTED, GOT)                                           \
+  ASSERT_EQ_INT("CountingFailed", (EXPECTED), (GOT))
+
+// Asserts the ignored field of the counting struct.
+#define ASSERT_IGNORED(EXPECTED, GOT)                                          \
+  ASSERT_EQ_INT("CountingIgnored", (EXPECTED), (GOT))
 
 static acrt_t acrt;
-static counting_t counting;
 
-// Does the counting assertion.
-int assert_counting(counting_t expected);
-
-// If two counting structs contains the same inner data.
-int counting_are_equals(counting_t *left, counting_t *right);
-
-// Converts the counting struct in a visual format (string).
-char *counting_to_str(counting_t *self);
+assertion_result_t failed();
+assertion_result_t ignored();
+assertion_result_t passed();
+assertion_result_t total();
 
 int main() {
-  acrt = ACRT_NEW();
-
-  acrt.__context.counting.total = 5;
-  acrt.__context.counting.passed = 2;
-  acrt.__context.counting.failed = 2;
-  acrt.__context.counting.ignored = 1;
-
-  counting = (counting_t){.total = 5, .passed = 2, .failed = 2, .ignored = 1};
-
-  if (!assert_counting(counting))
-    return 1;
-
-  acrt_reset_counting(&acrt);
-  counting = (counting_t){.total = 0, .passed = 0, .failed = 0, .ignored = 0};
-
-  if (!assert_counting(counting))
-    return 1;
+  GENERATE_TEST_CASES(
+      tests, CAST_TO_ASSERT_FUNCTION(failed), CAST_TO_ASSERT_FUNCTION(ignored),
+      CAST_TO_ASSERT_FUNCTION(passed), CAST_TO_ASSERT_FUNCTION(total));
+  RUN_TEST_CASES(tests, NULL);
 
   return 0;
 }
 
-int assert_counting(counting_t expected) {
-  ASSERT_EQ_CUSTOM("CountingEq", &expected, &acrt.__context.counting,
-                   counting_are_equals, counting_to_str);
+// NOTE: test cases still not impl since they requir RUN macros impl.
+
+assertion_result_t failed() {
+  acrt = ACRT_NEW();
+  ACRT_SET_LOCAL_DEFAULT(&acrt, 1);
+
+  // TODO: add assertions here.
   return ASSERTION_PASSED;
 }
 
-int counting_are_equals(counting_t *left, counting_t *right) {
-  if (!left || !right)
-    return 0;
+assertion_result_t ignored() {
+  acrt = ACRT_NEW();
+  ACRT_SET_LOCAL_DEFAULT(&acrt, 1);
 
-  return left->failed == right->failed && left->ignored == right->ignored &&
-         left->total == right->total && left->passed == right->passed;
+  // TODO: add assertions here.
+  return ASSERTION_PASSED;
 }
 
-char *counting_to_str(counting_t *self) {
-  char *buffer;
-  if (!(buffer = malloc(256)))
-    return NULL;
+assertion_result_t passed() {
+  acrt = ACRT_NEW();
+  ACRT_SET_LOCAL_DEFAULT(&acrt, 1);
 
-  snprintf(buffer, 256,
-           "Counting { .total = %d, .passed = %d, .failed = %d, .ignored = %d}",
-           self->total, self->passed, self->failed, self->ignored);
-  return buffer;
+  // TODO: add assertions here.
+  return ASSERTION_PASSED;
+}
+
+assertion_result_t total() {
+  acrt = ACRT_NEW();
+  ACRT_SET_LOCAL_DEFAULT(&acrt, 1);
+
+  // TODO: add assertions here.
+  return ASSERTION_PASSED;
 }

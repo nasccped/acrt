@@ -1,121 +1,134 @@
-#include <stdio.h>
-#include <string.h>
-
 #include "../src/acrt.h"
 #include "test_util.h"
 
-#define ON_FAIL_KIND_TO_STR(KIND)                                              \
-  (KIND) == ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE                                \
-      ? "ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE"                                  \
-  : (KIND) == ON_FAIL_SKIP_FUTURE_ASSERTIONS                                   \
-      ? "ON_FAIL_SKIP_FUTURE_ASSERTIONS"                                       \
-  : (KIND) == ON_FAIL_CONTINUE_ASSERTIONS ? "ON_FAIL_CONTINUE_ASSERTIONS"      \
-  : (KIND) == ON_FAIL_PRINT_COUNTING_AND_EXIT_PROGRAM_WITH_EXIT_CODE           \
-      ? "ON_FAIL_PRINT_COUNTING_AND_EXIT_PROGRAM_WITH_EXIT_CODE"               \
-  : (KIND) == ON_FAIL_RUN_CALLBACK_AND_EXIT_WITH_EXIT_CODE                     \
-      ? "ON_FAIL_RUN_CALLBACK_AND_EXIT_WITH_EXIT_CODE"                         \
-      : "UNDEFINED INTEGER"
+// Asserts the on fail callback argument pointer.
+#define ASSERT_CALLBACK_ARG_POINTER(EXPECTED, GOT)                             \
+  ASSERT_EQ_POINTER("OnFailCallbackArgPointer", (EXPECTED), (GOT))
 
-typedef struct __acrt_context_on_fail on_fail_t;
-typedef struct __acrt_counting counting_t;
-typedef enum __acrt_on_fail_kind kind_t;
+// Asserts the on fail function callback pointer.
+#define ASSERT_CALLBACK_EXIT_CODE(EXPECTED, GOT)                               \
+  ASSERT_EQ_INT("OnFailCallbackExitCode", (EXPECTED), (GOT))
 
-// Asserts if the 'on_fail->action.callback_and_exit' fields fit to expected
-// ones.
-int assert_callback(void (*expected_func)(void *), void *expected_arg,
-                    int expecte_code);
+// Asserts the on fail function callback pointer.
+#define ASSERT_CALLBACK_FUNCTION_POINTER(EXPECTED, GOT)                        \
+  ASSERT_EQ_POINTER("OnFailCallbackFuncPointer", (EXPECTED), (GOT))
 
-// Asserts if p points to the same address of counting pointer + code is the
-// same as expected.
-int assert_counting_and_exit(counting_t *expected_address, int expected_code);
+// Asserts on fail counting pointer.
+#define ASSERT_COUNTING_EXIT_CODE(EXPECTED, GOT)                               \
+  ASSERT_EQ_INT("OnFailCountingExitCode", (EXPECTED), (GOT))
 
-// Asserts if the 'on_fail->action.exit_code' refers to the expected exit code.
-int assert_exit_code(int expected_code);
+// Asserts on fail counting pointer.
+#define ASSERT_COUNTING_POINTER(EXPECTED, GOT)                                 \
+  ASSERT_EQ_POINTER("OnFailCountingPointer", (EXPECTED), (GOT))
 
-// Asserts if the 'on_fail->kind' refers to the expected variant.
-int assert_kind(kind_t expected_kind);
+// Asserts on fail exit code.
+#define ASSERT_EXIT_CODE(EXPECTED, GOT)                                        \
+  ASSERT_EQ_INT("OnFailExitCode", (EXPECTED), (GOT))
+
+// Assert on fail kind.
+#define ASSERT_KIND(EXPECTED, GOT)                                             \
+  ASSERT_EQ_INT("OnFailKind", (int)(EXPECTED), (int)(GOT))
 
 // This function does nothing, it's just used as 'on_fail_callback' setter
 // param.
 void callback_example(char *string);
 
+assertion_result_t exit_program_with_exit_code();
+assertion_result_t continue_assertions();
+assertion_result_t default_state();
+assertion_result_t print_counting_and_exit();
+assertion_result_t run_callback_and_exit();
+assertion_result_t skip_future_assertions();
+
 static acrt_t acrt;
-static on_fail_t *on_fail;
 
 int main(void) {
-  acrt = ACRT_NEW();
-  on_fail = &acrt.__context.on_fail;
-
-  if (!assert_kind(ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE))
-    return 1;
-  else if (!assert_exit_code(1))
-    return 1;
-
-  acrt_on_fail_continue_assertions(&acrt);
-
-  if (!assert_kind(ON_FAIL_CONTINUE_ASSERTIONS))
-    return 1;
-
-  acrt_on_fail_print_counting_and_exit(&acrt, 3);
-
-  if (!assert_kind(ON_FAIL_PRINT_COUNTING_AND_EXIT_PROGRAM_WITH_EXIT_CODE))
-    return 1;
-  else if (!assert_counting_and_exit(&acrt.__context.counting, 3))
-    return 1;
-
-  acrt_on_fail_skip_assertions(&acrt);
-
-  if (!assert_kind(ON_FAIL_SKIP_FUTURE_ASSERTIONS))
-    return 1;
-
-  char *string = "my string";
-  void (*callback)(void *) = (void (*)(void *))callback_example;
-
-  acrt_on_fail_run_callback_and_exit(&acrt, callback, string, 2);
-
-  if (!assert_kind(ON_FAIL_RUN_CALLBACK_AND_EXIT_WITH_EXIT_CODE))
-    return 1;
-  else if (!assert_callback((void (*)(void *))callback_example, string, 2))
-    return 1;
-
-  // go back original state.
-  acrt_on_fail_exit_program(&acrt, 42);
-
-  if (!assert_kind(ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE))
-    return 1;
-  else if (!assert_exit_code(42))
-    return 1;
+  GENERATE_TEST_CASES(tests,
+                      CAST_TO_ASSERT_FUNCTION(exit_program_with_exit_code),
+                      CAST_TO_ASSERT_FUNCTION(continue_assertions),
+                      CAST_TO_ASSERT_FUNCTION(default_state),
+                      CAST_TO_ASSERT_FUNCTION(print_counting_and_exit),
+                      CAST_TO_ASSERT_FUNCTION(run_callback_and_exit),
+                      CAST_TO_ASSERT_FUNCTION(skip_future_assertions));
+  RUN_TEST_CASES(tests, NULL);
 
   return 0;
 }
 
-int assert_callback(void (*expected_func)(void *), void *expected_arg,
-                    int expecte_code) {
-  ASSERT_EQ_POINTER("OnFailCallback", expected_func,
-                    on_fail->action.callback_and_exit.callback_function);
-  ASSERT_EQ_POINTER("OnFailArg", expected_arg,
-                    on_fail->action.callback_and_exit.arg);
-  ASSERT_EQ_INT("OnFailCallbackExitCode", expecte_code,
-                on_fail->action.callback_and_exit.exit_code);
+assertion_result_t continue_assertions() {
+  acrt = ACRT_NEW();
+
+  acrt_on_fail_continue_assertions(&acrt);
+  ASSERT_KIND(ON_FAIL_CONTINUE_ASSERTIONS, acrt.__context.on_fail.kind);
+
   return ASSERTION_PASSED;
 }
 
-int assert_counting_and_exit(counting_t *expected_address, int expected_code) {
-  ASSERT_EQ_POINTER("CountingAddress", expected_address,
-                    on_fail->action.counting_and_exit.counting);
-  ASSERT_EQ_INT("CountingExitCode", expected_code,
-                on_fail->action.counting_and_exit.exit_code);
+assertion_result_t default_state() {
+  acrt = ACRT_NEW();
+
+  ASSERT_KIND(ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE, acrt.__context.on_fail.kind);
+  ASSERT_EXIT_CODE(1, acrt.__context.on_fail.action.exit_code);
+
   return ASSERTION_PASSED;
 }
 
-int assert_exit_code(int expected_code) {
-  ASSERT_EQ_INT("ExitCode", expected_code, on_fail->action.exit_code);
+assertion_result_t exit_program_with_exit_code() {
+  acrt = ACRT_NEW();
+
+  acrt_on_fail_exit_program(&acrt, 2);
+
+  ASSERT_KIND(ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE, acrt.__context.on_fail.kind);
+  ASSERT_EXIT_CODE(2, acrt.__context.on_fail.action.exit_code);
+
   return ASSERTION_PASSED;
 }
 
-int assert_kind(kind_t expected_kind) {
-  ASSERT_EQ_WITH_STRING_FUNC("OnFailKind", expected_kind, on_fail->kind,
-                             ON_FAIL_KIND_TO_STR);
+assertion_result_t print_counting_and_exit() {
+  acrt = ACRT_NEW();
+
+  acrt_on_fail_print_counting_and_exit(&acrt, 4);
+
+  ASSERT_KIND(ON_FAIL_PRINT_COUNTING_AND_EXIT_PROGRAM_WITH_EXIT_CODE,
+              acrt.__context.on_fail.kind);
+  ASSERT_COUNTING_EXIT_CODE(
+      4, acrt.__context.on_fail.action.counting_and_exit.exit_code);
+  ASSERT_COUNTING_POINTER(
+      &acrt.__context.counting,
+      acrt.__context.on_fail.action.counting_and_exit.counting);
+
+  return ASSERTION_PASSED;
+}
+
+assertion_result_t run_callback_and_exit() {
+  acrt = ACRT_NEW();
+  char *s = "string";
+
+  acrt_on_fail_run_callback_and_exit(&acrt, (void (*)(void *))callback_example,
+                                     s, 24);
+
+  ASSERT_KIND(ON_FAIL_RUN_CALLBACK_AND_EXIT_WITH_EXIT_CODE,
+              acrt.__context.on_fail.kind);
+
+  ASSERT_CALLBACK_FUNCTION_POINTER(
+      (void (*)(void *))callback_example,
+      acrt.__context.on_fail.action.callback_and_exit.callback_function);
+
+  ASSERT_CALLBACK_EXIT_CODE(
+      24, acrt.__context.on_fail.action.callback_and_exit.exit_code);
+
+  ASSERT_CALLBACK_ARG_POINTER(
+      s, acrt.__context.on_fail.action.callback_and_exit.arg);
+
+  return ASSERTION_PASSED;
+}
+
+assertion_result_t skip_future_assertions() {
+  acrt = ACRT_NEW();
+
+  acrt_on_fail_skip_assertions(&acrt);
+  ASSERT_KIND(ON_FAIL_SKIP_FUTURE_ASSERTIONS, acrt.__context.on_fail.kind);
+
   return ASSERTION_PASSED;
 }
 

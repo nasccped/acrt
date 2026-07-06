@@ -1,43 +1,30 @@
-#include <stdio.h>
-#include <string.h>
-
 #include "../src/acrt.h"
 #include "test_util.h"
 
-#define DISPLAY_MODE_TO_STR(MODE)                                              \
-  (MODE) == DISPLAY_MODE_FAILED_ONLY ? "DISPLAY_MODE_FAILED_ONLY"              \
-  : (MODE) == DISPLAY_MODE_FAILED_AND_PASSED                                   \
-      ? "DISPLAY_MODE_FAILED_AND_PASSED"                                       \
-  : (MODE) == DISPLAY_MODE_ALL   ? "DISPLAY_MODE_ALL"                          \
-  : (MODE) == DISPLAY_MODE_QUIET ? "DISPLAY_MODE_QUIET"                        \
-                                 : "UNDEFINED MODE"
+// Asserts if two display modes refers to the same variant.
+#define ASSERT_DISPLAY_MODE(EXPECTED, GOT)                                     \
+  ASSERT_EQ_INT("DisplayMode", (int)(EXPECTED), (int)(GOT));
 
 static acrt_t acrt;
 
-// Does the display mode assertion.
-int assert_display_mode(acrt_display_mode_t expected);
+assertion_result_t test_case_01();
 
 int main() {
-  acrt = ACRT_NEW();
-
-  if (!assert_display_mode(DISPLAY_MODE_FAILED_ONLY))
-    return 1;
-
-  acrt_display_mode(&acrt, DISPLAY_MODE_ALL);
-
-  if (!assert_display_mode(DISPLAY_MODE_ALL))
-    return 1;
-
-  acrt_display_mode(&acrt, DISPLAY_MODE_FAILED_AND_PASSED);
-
-  if (!assert_display_mode(DISPLAY_MODE_FAILED_AND_PASSED))
-    return 1;
+  GENERATE_TEST_CASES(tests, CAST_TO_ASSERT_FUNCTION(test_case_01));
+  RUN_TEST_CASES(tests, NULL);
 
   return 0;
 }
 
-int assert_display_mode(acrt_display_mode_t expected) {
-  ASSERT_EQ_WITH_STRING_FUNC("DisplayMode", expected,
-                             acrt.__context.display_mode, DISPLAY_MODE_TO_STR);
+assertion_result_t test_case_01() {
+  acrt = ACRT_NEW();
+  ASSERT_DISPLAY_MODE(DISPLAY_MODE_FAILED_ONLY, acrt.__context.display_mode);
+
+  acrt_display_mode(&acrt, DISPLAY_MODE_ALL);
+  ASSERT_DISPLAY_MODE(DISPLAY_MODE_ALL, acrt.__context.display_mode);
+
+  acrt_display_mode(&acrt, DISPLAY_MODE_QUIET);
+  ASSERT_DISPLAY_MODE(DISPLAY_MODE_QUIET, acrt.__context.display_mode);
+
   return ASSERTION_PASSED;
 }

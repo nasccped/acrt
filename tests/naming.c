@@ -1,75 +1,82 @@
-#include <stdio.h>
-#include <string.h>
-
 #include "../src/acrt.h"
 #include "test_util.h"
 
-#define KIND_TO_STRING(KIND)                                                   \
-  (KIND) == CONTEXT_NAME_USE_FILE_NAME ? "CONTEXT_NAME_USE_FILE_NAME"          \
-  : (KIND) == CONTEXT_NAME_USE_FUNCTION_NAME                                   \
-      ? "CONTEXT_NAME_USE_FUNCTION_NAME"                                       \
-      : "CONTEXT_NAME_USE_CUSTOM_NAME"
+// Asserts if two custom names are the same (strings).
+#define ASSERT_CUSTOM_NAME(EXPECTED, GOT)                                      \
+  ASSERT_EQ_STRING("CustomName", (EXPECTED), (GOT))
 
-static acrt_name_kind_t *name_kind;
+// Asserts if expected file name is the same as the got one (strings).
+#define ASSERT_FILE_NAME(EXPECTED, GOT)                                        \
+  ASSERT_EQ_STRING("FileName", (EXPECTED), (GOT))
 
-#define TO_VOID_POINTER(ACRT) (void *)(ACRT).__context.name.custom
+// Asserts if expected function name is the same as the got one (strings).
+#define ASSERT_FUNCTION_NAME(EXPECTED, GOT)                                    \
+  ASSERT_EQ_STRING("FunctionName", (EXPECTED), (GOT))
 
-// Does the file name field assertion and returns its result as integer.
-int assert_eq_str(const char *expected, const char *got);
+// Asserts if the expected name kind refers to the same variant of got one.
+#define ASSERT_NAME_KIND(EXPECTED, GOT)                                        \
+  ASSERT_EQ_INT("NameKind", (int)(EXPECTED), (int)(GOT))
 
-// Does the name kind assertion and returns its result as integer.
-int assert_name_kind(acrt_name_kind_t expected);
+static acrt_t acrt;
 
-// Asserts that the passed string points to NULL.
-int assert_pointer(void *p, int expecting_null);
+// Custom naming assertion.
+assertion_result_t custom();
+
+// File name field related assertions.
+assertion_result_t file_name();
+
+// Function name related assertions.
+assertion_result_t function_name();
+
+// Name kind related assertions.
+assertion_result_t name_kind();
 
 int main(void) {
-  acrt_t acrt = ACRT_NEW();
-  name_kind = &acrt.__context.name.kind;
-
-  // assert file name
-  if (!assert_name_kind(CONTEXT_NAME_USE_FILE_NAME))
-    return 1;
-  else if (!assert_eq_str(__FILE__, acrt.__context.name.file))
-    return 1;
-  else if (!assert_pointer(TO_VOID_POINTER(acrt), 1))
-    return 1;
-
-  acrt_set_name_to_function(&acrt);
-
-  // assert function name.
-  if (!assert_name_kind(CONTEXT_NAME_USE_FUNCTION_NAME))
-    return 1;
-  else if (!assert_eq_str(__FUNCTION__, acrt.__context.name.function))
-    return 1;
-  else if (!assert_pointer(TO_VOID_POINTER(acrt), 1))
-    return 1;
-
-  acrt_set_name_to_custom(&acrt, "cool");
-
-  // assert custom name.
-  if (!assert_name_kind(CONTEXT_NAME_USE_CUSTOM_NAME))
-    return 1;
-  else if (!assert_eq_str("cool", acrt.__context.name.custom))
-    return 1;
-  // if is null, actually...
-  else if (!assert_pointer(TO_VOID_POINTER(acrt), 0))
-    return 1;
+  GENERATE_TEST_CASES(tests, CAST_TO_ASSERT_FUNCTION(custom),
+                      CAST_TO_ASSERT_FUNCTION(file_name),
+                      CAST_TO_ASSERT_FUNCTION(function_name),
+                      CAST_TO_ASSERT_FUNCTION(name_kind));
+  RUN_TEST_CASES(tests, NULL);
 
   return 0;
 }
 
-int assert_eq_str(const char *expected, const char *got) {
-  ASSERT_EQ_STRING("StringEq", expected, got);
+assertion_result_t custom() {
+  acrt = ACRT_NEW();
+  acrt_set_name_to_custom(&acrt, "some test");
+  ASSERT_CUSTOM_NAME("some test", acrt.__context.name.custom);
+
+  acrt_set_name_to_custom(&acrt, "abc");
+  ASSERT_CUSTOM_NAME("abc", acrt.__context.name.custom);
+
   return ASSERTION_PASSED;
 }
 
-int assert_name_kind(acrt_name_kind_t expected) {
-  ASSERT_EQ_WITH_STRING_FUNC("Name kind", expected, *name_kind, KIND_TO_STRING);
+assertion_result_t file_name() {
+  acrt = ACRT_NEW();
+  ASSERT_FILE_NAME(__FILE__, acrt.__context.name.file);
   return ASSERTION_PASSED;
 }
 
-int assert_pointer(void *p, int expecting_null) {
-  ASSERT_EQ_POINTER("Pointer", p, expecting_null ? NULL : p);
+assertion_result_t function_name() {
+  acrt = ACRT_NEW();
+  // WARN: hardcoded assertion.
+  ASSERT_FUNCTION_NAME("function_name", acrt.__context.name.function);
+  return ASSERTION_PASSED;
+}
+
+assertion_result_t name_kind() {
+  acrt = ACRT_NEW();
+  ASSERT_NAME_KIND(CONTEXT_NAME_USE_FILE_NAME, acrt.__context.name.kind);
+
+  acrt_set_name_to_function(&acrt);
+  ASSERT_NAME_KIND(CONTEXT_NAME_USE_FUNCTION_NAME, acrt.__context.name.kind);
+
+  acrt_set_name_to_custom(&acrt, "custom");
+  ASSERT_NAME_KIND(CONTEXT_NAME_USE_CUSTOM_NAME, acrt.__context.name.kind);
+
+  acrt_set_name_to_file(&acrt);
+  ASSERT_NAME_KIND(CONTEXT_NAME_USE_FILE_NAME, acrt.__context.name.kind);
+
   return ASSERTION_PASSED;
 }

@@ -5,7 +5,7 @@
 #define ACRT_SET_LOCAL_DEFAULT(ACRT, CONTINUE_ON_FAIL)                         \
   do {                                                                         \
     acrt_reset_counting((ACRT));                                               \
-    acrt_display_mode((ACRT), DISPLAY_MODE_QUIET);                             \
+    acrt_set_display_mode_to_quiet((ACRT));                                    \
     if ((CONTINUE_ON_FAIL))                                                    \
       acrt_on_fail_continue_assertions((ACRT));                                \
     else                                                                       \

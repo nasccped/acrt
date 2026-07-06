@@ -1,6 +1,8 @@
 #ifndef _ACRT_H_
 #define _ACRT_H_
 
+#include <stdio.h>
+
 // Which 'context_name' variant to print?
 typedef enum {
 
@@ -118,10 +120,7 @@ typedef enum {
   // Display only failed assertions.
   DISPLAY_MODE_FAILED_ONLY,
 
-  // Display both failed and passed assertions.
-  DISPLAY_MODE_FAILED_AND_PASSED,
-
-  // Display all assertions (even when being ignored).
+  // Display all assertions.
   DISPLAY_MODE_ALL,
 
   // Don't display any assertion.
@@ -160,9 +159,38 @@ typedef struct {
 // takes the __FILE__ and __FUNCTION__ strings.
 acrt_t __acrt_default(const char *, const char *);
 
+// Private function that runs a boolean assertion from a given number
+// (bool-compatible).
+//
+// It takes an acrt pointer (returns 0 if null), the current source code line,
+// and the number to be asserted.
+//
+// It'll returns 1 if the number is any non-zero value.
+int __acrt_run_boolean_assertion_from_number(acrt_t *self,
+                                             const unsigned int line,
+                                             int number);
+
+// Run a boolean assertion over a void pointer value.
+//
+// It takse an acrt pointer (returns 0 if null), the current source code line,
+// and the pointer to be asserted.
+//
+// It'll returns 1 if pointer holding a non-null address.
+int __acrt_run_boolean_assertion_from_pointer(acrt_t *self,
+                                              const unsigned int line,
+                                              void *pointer);
+
 // Creates a new acrt struct. The naming and counter is set to default. You can
 // still set a custom name by using 'acrt_set_name' function.
 #define ACRT_NEW() __acrt_default(__FILE__, __FUNCTION__)
+
+// Runs a bool-like assertion.
+#define ACRT_BOOL(SELF, VALUE)                                                 \
+  __builtin_choose_expr(                                                       \
+      __builtin_classify_type((VALUE)) == 5,                                   \
+      __acrt_run_boolean_assertion_from_pointer((SELF), __LINE__,              \
+                                                (void *)(VALUE)),              \
+      __acrt_run_boolean_assertion_from_number((SELF), __LINE__, !!(VALUE)))
 
 // Set a new display mode the self acrt pointer.
 void acrt_display_mode(acrt_t *self, acrt_display_mode_t mode);

@@ -192,6 +192,12 @@ int __acrt_run_boolean_assertion_from_pointer(acrt_t *self,
                                                 (void *)(VALUE)),              \
       __acrt_run_boolean_assertion_from_number((SELF), __LINE__, !!(VALUE)))
 
+// Display the inner counting data. This function requires an acrt pointer + a
+// file target to diplay (stdout/stderr).
+//
+// Does nothing if any of param is NULL.
+void acrt_display_counting(acrt_t *self, FILE *f);
+
 // Set a new display mode the self acrt pointer.
 void acrt_display_mode(acrt_t *self, acrt_display_mode_t mode);
 

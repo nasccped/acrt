@@ -97,6 +97,14 @@ int __acrt_run_boolean_assertion_from_pointer(acrt_t *self,
   return acrt_handle_result(self, res);
 }
 
+void acrt_display_counting(acrt_t *self, FILE *f) {
+  if (!self || !f)
+    return;
+
+  display_counting_data(STRING_FROM_CONTEXT_NAME(&self->__context.name),
+                        &self->__context.counting, f);
+}
+
 // Set a new display mode the self acrt pointer.
 void acrt_display_mode(acrt_t *self, acrt_display_mode_t mode) {
   if (!self)

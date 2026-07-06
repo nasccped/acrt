@@ -11,6 +11,9 @@ typedef struct __acrt_context_on_fail on_fail_t;
 typedef struct __acrt_counting counting_t;
 typedef struct __acrt_result result_t;
 
+// Returns the acrt display mode field (private anonymous enum).
+#define ACRT_GET_DISPLAY_MODE(SELF) (SELF)->__context.display_mode
+
 // Runs the acrt pointer early checks (update fields + return before actually
 // asserting, if necessary).
 #define ACRT_RUN_EARLY_CHECKS(SELF)                                            \
@@ -65,6 +68,9 @@ typedef struct __acrt_result result_t;
 // failed or ignored) from the result itself.
 int acrt_handle_result(acrt_t *self, result_t result);
 
+// If the current assertion should be displayed.
+int acrt_should_display(acrt_t *self, result_t *result);
+
 acrt_t __acrt_default(const char *file_name, const char *function_name) {
   global_context_t context = {
       .name = CONTEXT_NAME_BUILD_DEFAULT(file_name, function_name),
@@ -103,14 +109,6 @@ void acrt_display_counting(acrt_t *self, FILE *f) {
 
   display_counting_data(STRING_FROM_CONTEXT_NAME(&self->__context.name),
                         &self->__context.counting, f);
-}
-
-// Set a new display mode the self acrt pointer.
-void acrt_display_mode(acrt_t *self, acrt_display_mode_t mode) {
-  if (!self)
-    return;
-
-  self->__context.display_mode = mode;
 }
 
 void acrt_on_fail_continue_assertions(acrt_t *self) {
@@ -167,6 +165,30 @@ void acrt_reset_counting(acrt_t *self) {
   self->__context.counting = (counting_t){0};
 }
 
+// Set the acrt display mode field to 'DISPLAY_MODE_ALL' variant.
+void acrt_set_display_mode_to_all(acrt_t *self) {
+  if (!self)
+    return;
+
+  self->__context.display_mode = DISPLAY_MODE_ALL;
+}
+
+// Set the acrt display mode field to 'DISPLAY_MODE_FAILED_ONLY' variant.
+void acrt_set_display_mode_to_failed_only(acrt_t *self) {
+  if (!self)
+    return;
+
+  self->__context.display_mode = DISPLAY_MODE_FAILED_ONLY;
+}
+
+// Set the acrt display mode field to 'DISPLAY_MODE_QUIET' variant.
+void acrt_set_display_mode_to_quiet(acrt_t *self) {
+  if (!self)
+    return;
+
+  self->__context.display_mode = DISPLAY_MODE_QUIET;
+}
+
 void acrt_set_name_to_custom(acrt_t *self, const char *name) {
   if (!self || !name || !strlen(name))
     return;
@@ -192,13 +214,10 @@ void acrt_set_name_to_function(acrt_t *self) {
 }
 
 int acrt_handle_result(acrt_t *self, result_t result) {
-  acrt_display_mode_t *d_mode = &self->__context.display_mode;
+
   counting_t *counting = &self->__context.counting;
 
-  int should_display = *d_mode == DISPLAY_MODE_ALL ||
-                       (*d_mode == DISPLAY_MODE_FAILED_ONLY && !result.passed);
-
-  if (should_display)
+  if (acrt_should_display(self, &result))
     display_acrt_result(&result);
 
   if (result.passed) {
@@ -210,4 +229,16 @@ int acrt_handle_result(acrt_t *self, result_t result) {
   counting->total += 1;
 
   return result.passed;
+}
+
+// If the current assertion should be displayed.
+int acrt_should_display(acrt_t *self, result_t *result) {
+  if (!self || !result)
+    return 0;
+  else if (ACRT_GET_DISPLAY_MODE(self) == DISPLAY_MODE_QUIET)
+    return 0;
+  else if (ACRT_GET_DISPLAY_MODE(self) == DISPLAY_MODE_FAILED_ONLY &&
+           result->passed)
+    return 0;
+  return 1;
 }

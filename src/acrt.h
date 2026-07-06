@@ -114,20 +114,6 @@ struct __acrt_counting {
       ignored;
 };
 
-// Display mode for acrt context.
-typedef enum {
-
-  // Display only failed assertions.
-  DISPLAY_MODE_FAILED_ONLY,
-
-  // Display all assertions.
-  DISPLAY_MODE_ALL,
-
-  // Don't display any assertion.
-  DISPLAY_MODE_QUIET
-
-} acrt_display_mode_t;
-
 // Acrt private context to handle.
 struct __acrt_context {
 
@@ -141,7 +127,18 @@ struct __acrt_context {
   struct __acrt_counting counting;
 
   // Displaying related content.
-  acrt_display_mode_t display_mode;
+  enum {
+
+    // Display only failed assertions.
+    DISPLAY_MODE_FAILED_ONLY,
+
+    // Display all assertions.
+    DISPLAY_MODE_ALL,
+
+    // Don't display any assertion.
+    DISPLAY_MODE_QUIET
+
+  } display_mode;
 
   // If the latest assertion was failed.
   int latest_was_failed;
@@ -198,9 +195,6 @@ int __acrt_run_boolean_assertion_from_pointer(acrt_t *self,
 // Does nothing if any of param is NULL.
 void acrt_display_counting(acrt_t *self, FILE *f);
 
-// Set a new display mode the self acrt pointer.
-void acrt_display_mode(acrt_t *self, acrt_display_mode_t mode);
-
 // Set 'on fail' field to continue future assertions (even if the current one
 // fails).
 void acrt_on_fail_continue_assertions(acrt_t *self);
@@ -227,6 +221,15 @@ void acrt_on_fail_skip_assertions(acrt_t *self);
 
 // Reset the self counting pointer to it's initial state (zero items).
 void acrt_reset_counting(acrt_t *self);
+
+// Set the acrt display mode field to 'DISPLAY_MODE_ALL' variant.
+void acrt_set_display_mode_to_all(acrt_t *self);
+
+// Set the acrt display mode field to 'DISPLAY_MODE_FAILED_ONLY' variant.
+void acrt_set_display_mode_to_failed_only(acrt_t *self);
+
+// Set the acrt display mode field to 'DISPLAY_MODE_QUIET' variant.
+void acrt_set_display_mode_to_quiet(acrt_t *self);
 
 // Sets a custom name context to the self acrt pointer. The name parameter must
 // be a non-null/zero length string, otherwise, operation fails.

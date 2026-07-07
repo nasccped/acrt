@@ -50,12 +50,9 @@ void update_counting(counting_t *self, acrt_result_t *result);
 acrt_t __acrt_default(const char *file_name, const char *function_name) {
   return (acrt_t){
       .context_name = {.kind = CONTEXT_NAME_USE_FILE_NAME,
-                       .data =
-                           {
-
-                               .file = file_name,
-                               .function = function_name,
-                               .custom = STR_OR_CTX_NAME_PLACEHOLDER(NULL)}},
+                       .data = {.file = file_name,
+                                .function = function_name,
+                                .custom = STR_OR_CTX_NAME_PLACEHOLDER(NULL)}},
       .counting = (counting_t){0},
       .display_mode = DISPLAY_MODE_FAILED_ONLY,
       .on_fail = {.action_kind = ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE,

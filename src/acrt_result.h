@@ -6,7 +6,7 @@
 // - kind (boolean, eq, not_eq, ...)
 // - value (pointer, pointer pair, ...)
 // - status (passed or not)
-struct __acrt_result {
+typedef struct {
 
   // Assertion context fields.
   struct {
@@ -19,12 +19,11 @@ struct __acrt_result {
 
   } context;
 
-  // Kind of assertion result.
+  // Kind of assertion.
   enum {
 
-    // When the value being asserted is just a 'bool' compatible value (like
-    // int, float, ...).
-    SIMPLE_BOOLEAN_ASSERTION_KIND,
+    // When asserting normal integer values.
+    INTEGER_BOOLEAN_ASSERTION_KIND,
 
     // When the value being asserted is a pointer.
     POINTER_BOOLEAN_ASSERTION_KIND,
@@ -36,23 +35,46 @@ struct __acrt_result {
   union {
 
     // Holds pointer address when 'kind == POINTER_BOOLEAN_ASSERTION_KIND'.
-    void *single_pointer;
+    void *boolean_pointer;
 
   } data;
 
-  // If the assertion was (or not) passed.
-  int passed;
-};
+  // Result status for the current assertion.
+  enum {
 
-// Creates a new acrt_result from a boolean value
-// ('NUMBER_BOOLEAN_ASSERTION_KIND').
-struct __acrt_result acrt_result_from_int(const char *name,
-                                          const unsigned int line, int value);
+    // When the assertion was successfully passed without any warning.
+    PASSED_ASSERTION_WITHOUT_WARNING,
+
+    // When the assertion was passed but with some warning.
+    PASSED_ASSERTION_WITH_WARNING,
+
+    // When the assertion was failed.
+    FAILED_ASSERTION,
+
+    // When the assertion was ignored.
+    IGNORED_ASSERTION
+
+  } status;
+
+} acrt_result_t;
+
+// When the result fields doesn't matter (just looking for ignored status).
+#define IGNORED_ASSERTION_RESULT                                               \
+  (acrt_result_t) { .status = IGNORED_ASSERTION }
+
+// Returns 1 if self is non-null + inner status is recognized as passed value,
+// otherwise, returns zero.
+int acrt_result_is_passed(acrt_result_t *self);
+
+// Creates a new acrt_result from a int value
+// ('INTEGER_BOOLEAN_ASSERTION_KIND').
+acrt_result_t acrt_result_from_int(const char *name, const unsigned int line,
+                                   int value);
 
 // Creates a new acrt_result from a pointer ('POINTER_BOOLEAN_ASSERTION_KIND' by
 // default).
-struct __acrt_result acrt_result_from_single_pointer(const char *name,
-                                                     const unsigned int line,
-                                                     void *pointer);
+acrt_result_t acrt_result_from_single_pointer(const char *name,
+                                              const unsigned int line,
+                                              void *pointer);
 
 #endif

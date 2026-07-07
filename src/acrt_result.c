@@ -1,28 +1,30 @@
-#include <stdlib.h>
-
 #include "acrt_result.h"
 
-typedef struct __acrt_result result_t;
-
-// Context body wrapper.
+// Context block.
 #define CTX(NAME, LINE) {.name = (NAME), .line = (LINE)}
 
-// (RWD: result with data) creates result with data field.
-#define RWD(CTX, KIND, DATA, PASSED)                                           \
-  (result_t) { .context = CTX, .kind = (KIND), DATA, .passed = (PASSED) }
+int acrt_result_is_passed(acrt_result_t *self) {
+  if (!self)
+    return 0;
 
-// (RWND: result with no data) creates result without data field.
-#define RWND(CTX, KIND, PASSED)                                                \
-  (result_t) { .context = CTX, .kind = (KIND), .passed = (PASSED) }
-
-result_t acrt_result_from_int(const char *name, const unsigned int line,
-                              int value) {
-  return RWND(CTX(name, line), SIMPLE_BOOLEAN_ASSERTION_KIND, value != 0);
+  return self->status == PASSED_ASSERTION_WITHOUT_WARNING ||
+         self->status == PASSED_ASSERTION_WITH_WARNING;
 }
 
-result_t acrt_result_from_single_pointer(const char *name,
-                                         const unsigned int line,
-                                         void *pointer) {
-  return RWD(CTX(name, line), POINTER_BOOLEAN_ASSERTION_KIND,
-             .data.single_pointer = pointer, pointer != NULL);
+acrt_result_t acrt_result_from_int(const char *name, const unsigned int line,
+                                   int value) {
+  return (acrt_result_t){.context = CTX(name, line),
+                         .kind = INTEGER_BOOLEAN_ASSERTION_KIND,
+                         .status = value ? PASSED_ASSERTION_WITHOUT_WARNING
+                                         : FAILED_ASSERTION};
+}
+
+acrt_result_t acrt_result_from_single_pointer(const char *name,
+                                              const unsigned int line,
+                                              void *pointer) {
+  return (acrt_result_t){.context = {.name = name, .line = line},
+                         .kind = POINTER_BOOLEAN_ASSERTION_KIND,
+                         .data.boolean_pointer = pointer,
+                         .status = pointer ? PASSED_ASSERTION_WITHOUT_WARNING
+                                           : FAILED_ASSERTION};
 }

@@ -1,5 +1,5 @@
 CC=gcc
-FLAGS=-Wall -Wextra
+FLAGS=-Wall -Wextra -Werror
 SRC_DIR=./src
 SRC_FILES=$(wildcard $(SRC_DIR)/*.c)
 EXAMPLE_DIR=./examples
@@ -21,7 +21,7 @@ build-tests: $(OUT_DIR) $(TEST_BINS)
 
 # example build recipes
 $(OUT_DIR)/exmp-%.exe: $(EXAMPLE_DIR)/%.c $(SRC_FILES)
-	$(CC) $(FLAGS) -Werror -g $^ -o $@
+	$(CC) $(FLAGS) -g $^ -o $@
 
 # test build recipes
 $(OUT_DIR)/test-%.exe: $(TEST_DIR)/%.c $(SRC_FILES)

@@ -27,7 +27,7 @@ static char code_location[128];
 #define ASSERTION_FAILED (assertion_result_t){.passed = 0}
 
 // String placeholder for null pointers.
-#define NULL_PLACEHOLDER "<NULL>"
+#define STR_OR_NULL_PLACEHOLDER(STR) (STR) ? (STR) : "<NULL>"
 
 // Set the string content within code_location static var.
 #define SET_CODE_LOCATION                                                      \
@@ -64,9 +64,11 @@ static char code_location[128];
 
 // Asserts if two strings are the same.
 #define ASSERT_EQ_STRING(TITLE, EXPECTED, GOT)                                 \
-  if (strcmp((EXPECTED), (GOT)) != 0) {                                        \
+  if (!(EXPECTED) || !(GOT) || strcmp((EXPECTED), (GOT)) != 0) {               \
     DISPLAY_AND_RETURN("%s assertion failed.\n%*cExpecting %s, got %s\n",      \
-                       (TITLE), CODE_LOCATION_LENGTH, ' ', (EXPECTED), (GOT)); \
+                       (TITLE), CODE_LOCATION_LENGTH, ' ',                     \
+                       STR_OR_NULL_PLACEHOLDER(EXPECTED),                      \
+                       STR_OR_NULL_PLACEHOLDER(GOT));                          \
   }
 
 // Asserts if a function that compares two undefined type values returns true

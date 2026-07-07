@@ -10,16 +10,25 @@
 #define RED(STR) "\x1b[91m" STR "\x1b[0m"
 #define YELLOW(STR) "\x1b[93m" STR "\x1b[0m"
 
-// Returns the status for the current inline assertion (passed or not).
-#define CURRENT_RESULT_STATUS(RESULT) (RESULT) ? GREEN("passed") : RED("failed")
+// Returns a string based on the 'kind' field.
+#define ASSERTION_KIND_STRING(KIND)                                            \
+  ((KIND) == POINTER_BOOLEAN_ASSERTION_KIND ||                                 \
+   (KIND) == INTEGER_BOOLEAN_ASSERTION_KIND)                                   \
+      ? "boolean"                                                              \
+      : "undefined"
 
-// Prints a single line of a result counting table. It takes the header width
-// (HW), a file target (FILE: stdout/stderr) and a conditional (boolean) corner
-// field (CORNER).
-//
-// The (CORNER) is used to check if '+' char must be displayed as line
-// begins/ends.
-#define PRINT_RESULT_COUNTING_TABLE_BORDER(HW, FILE, CORNER)                   \
+// Returns a string that represents the 'acrt_result.status' field.
+#define ASSERTION_STATUS_STRING(STTS)                                          \
+  (STTS) == PASSED_ASSERTION_WITHOUT_WARNING ? GREEN("passed")                 \
+  : (STTS) == PASSED_ASSERTION_WITH_WARNING                                    \
+      ? GREEN("passed") " with " YELLOW("warning")                             \
+  : (STTS) == FAILED_ASSERTION ? RED("failed")                                 \
+                               : YELLOW("ignored")
+
+// Prints the top/mid/bottom border line of a counting table. It takes a file to
+// display (stdout/stderr), the header with (HW) and a boolean (integer) meaning
+// if there's corners.
+#define PRINT_RESULT_COUNTING_TABLE_BORDER(FILE, HW, CORNER)                   \
   do {                                                                         \
     int maximum = (HW) + 4;                                                    \
                                                                                \
@@ -37,103 +46,122 @@
     fprintf((FILE), "\n");                                                     \
   } while (0)
 
-// Prints a single row of a result counting table. It takes a row title (TITLE)
-// that is displayed at left side, an integer number (ROW_VALUE) that this title
-// holds, a char array that holds this number as string (NUM_HOLDER) and a
-// header width.
-#define PRINT_RESULT_COUNTING_TABLE_ROW(ROW_TITLE, ROW_VALUE, NUM_HOLDER, HW)  \
+// Prints a single row of a result counting table. It takes a file to display
+// (stdout/stderr), the title of current row (text displayed on the left side),
+// the integer value held by the meaning of this title and a header width (HW).
+#define PRINT_RESULT_COUNTING_TABLE_ROW(FILE, ROW_TITLE, ROW_VALUE, HW)        \
   do {                                                                         \
-    snprintf((NUM_HOLDER), sizeof((NUM_HOLDER)), "%d", (ROW_VALUE));           \
+    char numstr[16];                                                           \
+    snprintf(numstr, sizeof(numstr), "%d", (ROW_VALUE));                       \
+    int mid_gap = (HW) - 3 - (int)(strlen((ROW_TITLE)) + strlen(numstr));      \
                                                                                \
-    fprintf(f, "| %s: \x1b[90m", (ROW_TITLE));                                 \
-                                                                               \
-    int mid_gap =                                                              \
-        (HW) - 3 - (int)(strlen((ROW_TITLE)) + strlen((NUM_HOLDER)));          \
+    fprintf((FILE), "| %s: \x1b[90m", (ROW_TITLE));                            \
                                                                                \
     for (int i = 0; i < mid_gap; i++)                                          \
-      fputc('-', f);                                                           \
+      fputc('-', (FILE));                                                      \
                                                                                \
-    fprintf(f, "\x1b[0m %s |\n", (NUM_HOLDER));                                \
+    fprintf((FILE), "\x1b[0m %s |\n", numstr);                                 \
   } while (0)
 
-// Returns status for the acrt's 'counting' field.
+// Returns status string for the acrt's 'counting' field.
 #define RESULT_COUNTING_STATUS(COUNTING)                                       \
-  !(COUNTING)->total   ? BLACK("empty")                                        \
-  : (COUNTING)->failed ? RED("failed")                                         \
-                       : GREEN("passed")
-
-// Returns a char pointer based on the 'result.kind' field.
-#define STRING_FROM_ASSERTION_KIND(KIND)                                       \
-  ((KIND) == POINTER_BOOLEAN_ASSERTION_KIND ||                                 \
-   (KIND) == SIMPLE_BOOLEAN_ASSERTION_KIND)                                    \
-      ? "boolean"                                                              \
-      : "undefined"
+  !(COUNTING)->total                 ? BLACK("empty")                          \
+  : (COUNTING)->failed               ? RED("failed")                           \
+  : (COUNTING)->passed.with_warnings ? "partially " GREEN("passed")            \
+                                     : GREEN("passed")
 
 typedef struct __acrt_counting counting_t;
 
-// Struct used at 'display_counting_data' function. It holds a name/value pair.
-struct counting_table_row_pair {
-
-  // The name being used for the current row.
-  const char *name;
-
-  // The value pointer.
-  const unsigned int *value;
-};
-
-void display_acrt_result(result_t *res) {
+void display_acrt_result(acrt_result_t *res) {
   if (!res)
     return;
 
-  int passed = res->passed;
-  FILE *f = passed ? stdout : stderr;
-  const char *ctx_name = res->context.name;
-  const char *kind = STRING_FROM_ASSERTION_KIND(res->kind);
-  const char *stts = CURRENT_RESULT_STATUS(passed);
-
+  // string helding the current code line
   char line[32];
+  const char
+      // result context name
+      *ctx_name,
+      // assertion kind as str
+      *kind,
+      // assertion status
+      *stts;
+  int
+      // is assertion passed?
+      passed,
+      // left padding calc.
+      padding;
+  // file to display
+  FILE *f;
+
+  passed = acrt_result_is_passed(res);
+  f = passed ? stdout : stderr;
+  ctx_name = res->context.name;
+  kind = ASSERTION_KIND_STRING(res->kind);
+  stts = ASSERTION_STATUS_STRING(res->status);
+
   snprintf(line, sizeof(line), "%d", res->context.line);
-  int padding = (int)(strlen(ctx_name) + strlen(line) + 5);
+  padding = (int)(strlen(ctx_name) + strlen(line) + 5);
 
   fprintf(f, "[%s: %s] %s assertion %s\n", ctx_name, line, kind, stts);
 
   switch (res->kind) {
-  case SIMPLE_BOOLEAN_ASSERTION_KIND:
+  case INTEGER_BOOLEAN_ASSERTION_KIND:
     const char *value_is = passed ? "non zero" : "zero";
     fprintf(f, "%*svalue is %s.\n", padding, "", value_is);
     break;
 
   case POINTER_BOOLEAN_ASSERTION_KIND:
     fprintf(f, "%*svalue points to %p.\n", padding, "",
-            res->data.single_pointer);
+            res->data.boolean_pointer);
     break;
   }
   fprintf(f, "\n");
 }
+
+// Macro alias for 'PRINT_RESULT_COUNTING_TABLE_ROW' call.
+#define PRCTR(FILE, TITLE, VALUE, HW)                                          \
+  PRINT_RESULT_COUNTING_TABLE_ROW((FILE), (TITLE), (VALUE), (HW))
 
 void display_counting_data(const char *ctx_name, counting_t *counting,
                            FILE *f) {
   if (!counting || !f)
     return;
 
-  const char *status = RESULT_COUNTING_STATUS(counting);
-  int header_width = (int)(strlen(ctx_name) + strlen(status) + 10);
+  // status string for the current counting
+  const char *status;
 
-  PRINT_RESULT_COUNTING_TABLE_BORDER(header_width, f, 1);
+  unsigned int
+      // total of assertions passed with warnings
+      pww,
+      // total of assertion passed with no warnings
+      pwnw,
+      // total of failed assertions
+      fld,
+      // totla of ignored assertions
+      ignd,
+      // total of assertions
+      ttl;
+
+  // header width
+  int hw;
+
+  status = RESULT_COUNTING_STATUS(counting);
+  hw = (int)(strlen(ctx_name) + strlen(status) + 10);
+
+  PRINT_RESULT_COUNTING_TABLE_BORDER(f, hw, 1);
   fprintf(f, "| %s assertion status: %s |\n", ctx_name, status);
-  PRINT_RESULT_COUNTING_TABLE_BORDER(header_width, f, 0);
+  PRINT_RESULT_COUNTING_TABLE_BORDER(f, hw, 0);
 
-  char num[16];
-  struct counting_table_row_pair *cur,
-      pairs[] = {{.name = "passed", .value = &counting->passed},
-                 {.name = "failed", .value = &counting->failed},
-                 {.name = "ignored", .value = &counting->ignored},
-                 {.name = "total", .value = &counting->total}};
+  pww = counting->passed.with_warnings;
+  pwnw = counting->passed.without_warnings;
+  fld = counting->failed;
+  ignd = counting->ignored;
+  ttl = counting->total;
 
-  for (size_t i = 0; i < (sizeof(pairs) / sizeof(pairs[0])); i++) {
-    cur = &pairs[i];
-    PRINT_RESULT_COUNTING_TABLE_ROW(cur->name, *cur->value, num, header_width);
-  }
-
-  PRINT_RESULT_COUNTING_TABLE_BORDER(header_width, f, 1);
+  PRCTR(f, "passed (without warnings)", pwnw, hw);
+  PRCTR(f, "passed (with warnings)", pww, hw);
+  PRCTR(f, "failed", fld, hw);
+  PRCTR(f, "ignored", ignd, hw);
+  PRCTR(f, "total", ttl, hw);
+  PRINT_RESULT_COUNTING_TABLE_BORDER(f, hw, 1);
 }

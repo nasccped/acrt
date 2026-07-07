@@ -1,99 +1,8 @@
 #ifndef _ACRT_H_
 #define _ACRT_H_
 
+// It's used since some function signatures requires 'FILE' type.
 #include <stdio.h>
-
-// Which 'context_name' variant to print?
-typedef enum {
-
-  // Use the file name as name kind (default).
-  CONTEXT_NAME_USE_FILE_NAME,
-
-  // Use the function name as name kind.
-  CONTEXT_NAME_USE_FUNCTION_NAME,
-
-  // Use a custom naming specified by the user.
-  CONTEXT_NAME_USE_CUSTOM_NAME
-
-} acrt_name_kind_t;
-
-// Naming related stuff to print context at std(out/err).
-struct __acrt_context_name {
-
-  // Name kind for the current context name.
-  acrt_name_kind_t kind;
-
-  const char
-
-      // Using __FILE__ as context name.
-      *file,
-
-      // Using __FUNC__ as context name.
-      *function,
-
-      // Using a custom name.
-      *custom;
-};
-
-// Which action to execute on failed assertions.
-enum __acrt_on_fail_kind {
-
-  // Exit the entire program with the provided exit code at 'action.exit_code'
-  // (default).
-  ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE,
-
-  // Ignore all remaining assertions.
-  ON_FAIL_SKIP_FUTURE_ASSERTIONS,
-
-  // Continue all assertions normally.
-  ON_FAIL_CONTINUE_ASSERTIONS,
-
-  // Print assertion counting and exit the program with the exit code.
-  ON_FAIL_PRINT_COUNTING_AND_EXIT_PROGRAM_WITH_EXIT_CODE,
-
-  // Run a callback function pointer + exit the program with the exit code.
-  ON_FAIL_RUN_CALLBACK_AND_EXIT_WITH_EXIT_CODE
-};
-
-// Action for failed assertions (tagged enum).
-struct __acrt_context_on_fail {
-
-  enum __acrt_on_fail_kind kind;
-
-  // Action inner data.
-  union {
-
-    // Exit code when 'ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE' is set.
-    int exit_code;
-
-    // Struct when 'ON_FAIL_PRINT_COUNTING_AND_EXIT_PROGRAM_WITH_EXIT_CODE' is
-    // set.
-    struct {
-
-      // The counting pointer.
-      struct __acrt_counting *counting;
-
-      // The exit code to return.
-      int exit_code;
-
-    } counting_and_exit;
-
-    // Struct when 'ON_FAIL_RUN_CALLBACK_AND_EXIT_WITH_EXIT_CODE' is set.
-    struct {
-
-      // Callback function.
-      void (*callback_function)(void *);
-
-      // Arg used as callback param.
-      void *arg;
-
-      // Exit code to return.
-      int exit_code;
-
-    } callback_and_exit;
-
-  } action;
-};
 
 // Assertion counting.
 struct __acrt_counting {
@@ -103,30 +12,149 @@ struct __acrt_counting {
       // Total of ran assertions.
       total,
 
-      // Total of passed assertions.
-      passed,
-
       // Total of failed assertions.
       failed,
 
       // Total of ignored assertions (when 'ON_FAIL_SKIP_FUTURE_ASSERTIONS'
       // is set).
       ignored;
+
+  // Total of passed assertions.
+  struct {
+
+    unsigned int
+
+        // With warnings.
+        with_warnings,
+
+        // With no warnings (clean pass).
+        without_warnings;
+
+  } passed;
 };
 
-// Acrt private context to handle.
-struct __acrt_context {
+// Acrt entrypoint.
+typedef struct {
 
-  // Naming related context.
-  struct __acrt_context_name name;
+  // Context name for the self acrt instance.
+  struct {
 
-  // On fail action related context.
-  struct __acrt_context_on_fail on_fail;
+    // Kind of naming being used.
+    enum {
 
-  // Assertion counting related context.
+      // Use the file name as name kind (default).
+      CONTEXT_NAME_USE_FILE_NAME,
+
+      // Use the function name as name kind.
+      CONTEXT_NAME_USE_FUNCTION_NAME,
+
+      // Use a custom naming specified by the user.
+      CONTEXT_NAME_USE_CUSTOM_NAME
+
+    } kind;
+
+    // Data being held. The 'right' char pointer to use is determined by the
+    // 'context_name.kind' field.
+    struct {
+
+      const char
+
+          // Using __FILE__ as context name.
+          *file,
+
+          // Using __FUNCTION__ as context name.
+          *function,
+
+          // Using a custom name.
+          *custom;
+
+    } data;
+
+  } context_name;
+
+  // Data hold/action at failed assertions.
+  struct {
+
+    // Which data field to execute/use.
+    enum {
+
+      // Just exit the running process with an exit code (integer) value.
+      ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE,
+
+      // Ignore all remaining assertions.
+      ON_FAIL_DISABLE_ASSERTIONS,
+
+      // Increment counting.failed value and continue all assertions normally.
+      ON_FAIL_CONTINUE_ASSERTIONS,
+
+      // Print assertion counting and exit the program with the exit code.
+      ON_FAIL_PRINT_COUNTING_AND_EXIT_PROGRAM_WITH_EXIT_CODE,
+
+      // Run a callback function + exit the program with the exit code.
+      ON_FAIL_RUN_CALLBACK_AND_EXIT_WITH_EXIT_CODE,
+
+      // Run a callback function but without exiting the current process.
+      ON_FAIL_RUN_CALLBACK_AND_DO_NOT_EXIT,
+
+    } action_kind;
+
+    // Data to be used according to 'on_fail.action_kind' variant.
+    union {
+
+      // Process exit code when 'ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE' is set.
+      int code;
+
+      // Used data whe 'ON_FAIL_PRINT_COUNTING_AND_EXIT_PROGRAM_WITH_EXIT_CODE'
+      // is set.
+      struct {
+
+        // Print data referenced by the counting address.
+        struct __acrt_counting *counting;
+
+        // Exit process with the following exit code.
+        int code;
+
+      } print_counting_and_exit;
+
+      // Used data when 'ON_FAIL_RUN_CALLBACK_AND_EXIT_WITH_EXIT_CODE' is set.
+      struct {
+
+        // Function callback to be ran.
+        void (*callback)(void *);
+
+        // Data pointer to be used as callback param.
+        void *arg;
+
+        // Exit code value for the current process.
+        int code;
+
+      } run_callback_and_exit;
+
+      // Used data when 'ON_FAIL_RUN_CALLBACK_AND_DO_NOT_EXIT' is set.
+      struct {
+
+        // Function callback to be ran.
+        void (*callback)(void *);
+
+        // Data pointer to be used as callback param.
+        void *arg;
+
+        // Do remaining assertions after callback run?
+        int continue_assertions;
+
+      } run_callback_and_do_not_exit;
+
+    } data;
+
+  } on_fail;
+
+  // Assertion counting for the self acrt instance.
   struct __acrt_counting counting;
 
-  // Displaying related content.
+  // If the previous assertion was failed.
+  int previous_assertion_failed;
+
+  // Assertion displaying.
   enum {
 
     // Display only failed assertions.
@@ -140,20 +168,10 @@ struct __acrt_context {
 
   } display_mode;
 
-  // If the latest assertion was failed.
-  int latest_was_failed;
-};
-
-// Acrt entrypoint.
-typedef struct {
-
-  // Inner (private) context.
-  struct __acrt_context __context;
-
 } acrt_t;
 
 // Create a new 'acrt_t' struct with the default inner values. This function
-// takes the __FILE__ and __FUNCTION__ strings.
+// takes the __FILE__ and __FUNCTION__ strings (set into context_name fields).
 acrt_t __acrt_default(const char *, const char *);
 
 // Private function that runs a boolean assertion from a given number
@@ -197,30 +215,48 @@ void acrt_display_counting(acrt_t *self, FILE *f);
 
 // Set 'on fail' field to continue future assertions (even if the current one
 // fails).
-void acrt_on_fail_continue_assertions(acrt_t *self);
+void acrt_set_on_fail_continue_assertions(acrt_t *self);
+
+// Set 'on fail' field to skip future assertions if the current one fails.
+void acrt_set_on_fail_disable_assertions(acrt_t *self);
 
 // Exits the program with the provided exit code at the first failed assertion.
-void acrt_on_fail_exit_program(acrt_t *self, int code);
+void acrt_set_on_fail_exit_program(acrt_t *self, int code);
 
 // Set 'on fail' field to print counting (assertions) and exit program with the
 // provided integer code.
-void acrt_on_fail_print_counting_and_exit(acrt_t *self, int code);
+void acrt_set_on_fail_print_counting_and_exit(acrt_t *self, int code);
 
-// Set 'on fail' field to run callback function pointer with provided args +
-// exit with the provided integer code.
+// Set 'on fail' field to run callback function with provided args + exit with
+// the provided integer code.
 //
 // The callback function expects a void pointer argument (refer to 'arg' param).
 //
 // If 'self' or 'callback' param is null, the operation fails. The 'arg' param
 // can be null since the function can (or not) receive/use the param.
-void acrt_on_fail_run_callback_and_exit(acrt_t *self, void (*callback)(void *),
-                                        void *arg, int code);
+void acrt_set_on_fail_run_callback_and_exit(acrt_t *self,
+                                            void (*callback)(void *), void *arg,
+                                            int code);
 
-// Set 'on fail' field to skip future assertions if the current one fails.
-void acrt_on_fail_skip_assertions(acrt_t *self);
+// Set 'on fail' field to run callback function with the provided arg but
+// without exiting the current process.
+//
+// The callback function expects a void pointer argument (refer to 'arg' param).
+//
+// If 'self' or 'callback' param is null, the operation fails. The 'arg' param
+// can be null since the function can (or not) receive/use the param.
+//
+// This function also takes a bool (integer) param which decides if remaining
+// assertions should continue after callback:
+// - '0' means to skip assertions.
+// - '<other>' means to continue assertions.
+void acrt_set_on_fail_run_callback_without_exit(acrt_t *self,
+                                                void (*callback)(void *),
+                                                void *arg,
+                                                int continue_assertons);
 
-// Reset the self counting pointer to it's initial state (zero items).
-void acrt_reset_counting(acrt_t *self);
+// Reset the assertions counting and previous_assertion_failed fields only.
+void acrt_reset_assertions_state(acrt_t *self);
 
 // Set the acrt display mode field to 'DISPLAY_MODE_ALL' variant.
 void acrt_set_display_mode_to_all(acrt_t *self);

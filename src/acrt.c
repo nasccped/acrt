@@ -147,7 +147,7 @@ void acrt_set_on_fail_run_callback_and_exit(acrt_t *self,
 void acrt_set_on_fail_run_callback_without_exit(acrt_t *self,
                                                 void (*callback)(void *),
                                                 void *arg,
-                                                int continue_assertons) {
+                                                int continue_assertions) {
   if (!self || !callback)
     return;
 
@@ -155,7 +155,7 @@ void acrt_set_on_fail_run_callback_without_exit(acrt_t *self,
   GET_ON_FAIL(self).data.run_callback_and_do_not_exit.callback = callback;
   GET_ON_FAIL(self).data.run_callback_and_do_not_exit.arg = arg;
   GET_ON_FAIL(self).data.run_callback_and_do_not_exit.continue_assertions =
-      continue_assertons;
+      continue_assertions;
 }
 
 void acrt_reset_assertions_state(acrt_t *self) {

@@ -253,7 +253,7 @@ void acrt_set_on_fail_run_callback_and_exit(acrt_t *self,
 void acrt_set_on_fail_run_callback_without_exit(acrt_t *self,
                                                 void (*callback)(void *),
                                                 void *arg,
-                                                int continue_assertons);
+                                                int continue_assertions);
 
 // Reset the assertions counting and previous_assertion_failed fields only.
 void acrt_reset_assertions_state(acrt_t *self);

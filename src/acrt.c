@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string.h>
 
 #include "acrt.h"
@@ -37,6 +38,9 @@ typedef struct __acrt_counting counting_t;
 // Handles the result stuff based on self inner state. Returns the int (passed,
 // failed or ignored) from the result itself.
 int acrt_handle_result(acrt_t *self, acrt_result_t *result);
+
+// Performs the on_fail field action.
+void acrt_perform_on_fail(acrt_t *self);
 
 // If the current assertion should be displayed.
 int acrt_should_display(acrt_t *self, acrt_result_t *result);
@@ -223,6 +227,10 @@ int acrt_handle_result(acrt_t *self, acrt_result_t *result) {
     display_acrt_result(result);
 
   update_counting(&self->counting, result);
+
+  if (!acrt_result_is_passed(result))
+    acrt_perform_on_fail(self);
+
   return acrt_result_is_passed(result);
 }
 
@@ -233,6 +241,48 @@ int acrt_should_display(acrt_t *self, acrt_result_t *result) {
     return 0;
   else
     return 1;
+}
+
+void acrt_perform_on_fail(acrt_t *self) {
+  if (!self)
+    return;
+
+  void (*callback)(void *), *arg;
+  int code;
+  counting_t *counting;
+
+  switch (self->on_fail.action_kind) {
+  case ON_FAIL_DISABLE_ASSERTIONS:
+    self->previous_assertion_failed = 1;
+  case ON_FAIL_CONTINUE_ASSERTIONS:
+    break;
+
+  case ON_FAIL_PRINT_COUNTING_AND_EXIT_PROGRAM_WITH_EXIT_CODE:
+    code = GET_ON_FAIL(self).data.print_counting_and_exit.code;
+    counting = GET_ON_FAIL(self).data.print_counting_and_exit.counting;
+    display_counting_data(context_name_as_str(self), counting, stderr);
+    exit(code);
+    break;
+
+  case ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE:
+    code = GET_ON_FAIL(self).data.code;
+    exit(code);
+    break;
+
+  case ON_FAIL_RUN_CALLBACK_AND_EXIT_WITH_EXIT_CODE:
+    callback = GET_ON_FAIL(self).data.run_callback_and_exit.callback;
+    arg = GET_ON_FAIL(self).data.run_callback_and_exit.arg;
+    code = GET_ON_FAIL(self).data.run_callback_and_exit.code;
+    callback(arg);
+    exit(code);
+    break;
+
+  case ON_FAIL_RUN_CALLBACK_AND_DO_NOT_EXIT:
+    callback = self->on_fail.data.run_callback_and_do_not_exit.callback;
+    arg = GET_ON_FAIL(self).data.run_callback_and_do_not_exit.arg;
+    callback(arg);
+    break;
+  }
 }
 
 void update_counting(counting_t *self, acrt_result_t *result) {

@@ -64,7 +64,13 @@ assertion_result_t context_name() {
 assertion_result_t data(void) {
   char *string = "Some string";
   result = acrt_result_from_single_pointer("", 2, string);
-  ASSERT_DATA(result.data.boolean_pointer == string);
+  ASSERT_DATA(result.data.single_pointer == string);
+
+  result = acrt_result_from_int("", 22, 2);
+  ASSERT_DATA(result.data.integer_cast == 2);
+
+  result = acrt_result_from_int("", 22, (int)7.99);
+  ASSERT_DATA(result.data.integer_cast == 7);
 
   return ASSERTION_PASSED;
 }

@@ -2,6 +2,21 @@
 
 acrt library changelog.
 
+## v0.0.6
+
+- add license description at the top of source code
+- allow variable usage as boolean value
+
+## v0.0.5
+
+- add a better test coverage
+- logic refactor
+- better api meaning
+  - setter functions
+  - private implementation by using anonymous fields
+- remove outdated examples
+  - [ ] **todo:** replace it by new ones
+
 ## v0.0.4
 
 - return integer as assertion result

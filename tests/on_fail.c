@@ -35,7 +35,6 @@ void callback_example(char *string);
 
 assertion_result_t exit_program_with_exit_code();
 assertion_result_t continue_assertions();
-assertion_result_t default_state();
 assertion_result_t print_counting_and_exit();
 assertion_result_t run_callback_and_exit();
 assertion_result_t skip_future_assertions();
@@ -43,10 +42,10 @@ assertion_result_t skip_future_assertions();
 static acrt_t acrt;
 
 int main(void) {
-  GENERATE_TEST_CASES(tests,
+  acrt = ACRT_NEW();
+
+  GENERATE_TEST_CASES(tests, CAST_TO_ASSERT_FUNCTION(continue_assertions),
                       CAST_TO_ASSERT_FUNCTION(exit_program_with_exit_code),
-                      CAST_TO_ASSERT_FUNCTION(continue_assertions),
-                      CAST_TO_ASSERT_FUNCTION(default_state),
                       CAST_TO_ASSERT_FUNCTION(print_counting_and_exit),
                       CAST_TO_ASSERT_FUNCTION(run_callback_and_exit),
                       CAST_TO_ASSERT_FUNCTION(skip_future_assertions));
@@ -56,78 +55,50 @@ int main(void) {
 }
 
 assertion_result_t continue_assertions() {
-  acrt = ACRT_NEW();
-
-  acrt_on_fail_continue_assertions(&acrt);
-  ASSERT_KIND(ON_FAIL_CONTINUE_ASSERTIONS, acrt.__context.on_fail.kind);
-
-  return ASSERTION_PASSED;
-}
-
-assertion_result_t default_state() {
-  acrt = ACRT_NEW();
-
-  ASSERT_KIND(ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE, acrt.__context.on_fail.kind);
-  ASSERT_EXIT_CODE(1, acrt.__context.on_fail.action.exit_code);
+  acrt_set_on_fail_continue_assertions(&acrt);
+  ASSERT_KIND(ON_FAIL_CONTINUE_ASSERTIONS, acrt.on_fail.action_kind);
 
   return ASSERTION_PASSED;
 }
 
 assertion_result_t exit_program_with_exit_code() {
-  acrt = ACRT_NEW();
-
-  acrt_on_fail_exit_program(&acrt, 2);
-
-  ASSERT_KIND(ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE, acrt.__context.on_fail.kind);
-  ASSERT_EXIT_CODE(2, acrt.__context.on_fail.action.exit_code);
+  acrt_set_on_fail_exit_program(&acrt, 2);
+  ASSERT_KIND(ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE, acrt.on_fail.action_kind);
+  ASSERT_EXIT_CODE(2, acrt.on_fail.data.code);
 
   return ASSERTION_PASSED;
 }
 
 assertion_result_t print_counting_and_exit() {
-  acrt = ACRT_NEW();
-
-  acrt_on_fail_print_counting_and_exit(&acrt, 4);
-
+  acrt_set_on_fail_print_counting_and_exit(&acrt, 4);
   ASSERT_KIND(ON_FAIL_PRINT_COUNTING_AND_EXIT_PROGRAM_WITH_EXIT_CODE,
-              acrt.__context.on_fail.kind);
-  ASSERT_COUNTING_EXIT_CODE(
-      4, acrt.__context.on_fail.action.counting_and_exit.exit_code);
-  ASSERT_COUNTING_POINTER(
-      &acrt.__context.counting,
-      acrt.__context.on_fail.action.counting_and_exit.counting);
+              acrt.on_fail.action_kind);
+  ASSERT_COUNTING_EXIT_CODE(4, acrt.on_fail.data.print_counting_and_exit.code);
+  ASSERT_COUNTING_POINTER(&acrt.counting,
+                          acrt.on_fail.data.print_counting_and_exit.counting);
 
   return ASSERTION_PASSED;
 }
 
 assertion_result_t run_callback_and_exit() {
-  acrt = ACRT_NEW();
   char *s = "string";
-
-  acrt_on_fail_run_callback_and_exit(&acrt, (void (*)(void *))callback_example,
-                                     s, 24);
+  void (*callback)(void *) = (void (*)(void *))callback_example;
+  acrt_set_on_fail_run_callback_and_exit(&acrt, callback, s, 24);
 
   ASSERT_KIND(ON_FAIL_RUN_CALLBACK_AND_EXIT_WITH_EXIT_CODE,
-              acrt.__context.on_fail.kind);
-
+              acrt.on_fail.action_kind);
   ASSERT_CALLBACK_FUNCTION_POINTER(
       (void (*)(void *))callback_example,
-      acrt.__context.on_fail.action.callback_and_exit.callback_function);
-
-  ASSERT_CALLBACK_EXIT_CODE(
-      24, acrt.__context.on_fail.action.callback_and_exit.exit_code);
-
-  ASSERT_CALLBACK_ARG_POINTER(
-      s, acrt.__context.on_fail.action.callback_and_exit.arg);
+      acrt.on_fail.data.run_callback_and_exit.callback);
+  ASSERT_CALLBACK_EXIT_CODE(24, acrt.on_fail.data.run_callback_and_exit.code);
+  ASSERT_CALLBACK_ARG_POINTER(s, acrt.on_fail.data.run_callback_and_exit.arg);
 
   return ASSERTION_PASSED;
 }
 
 assertion_result_t skip_future_assertions() {
-  acrt = ACRT_NEW();
-
-  acrt_on_fail_skip_assertions(&acrt);
-  ASSERT_KIND(ON_FAIL_SKIP_FUTURE_ASSERTIONS, acrt.__context.on_fail.kind);
+  acrt_set_on_fail_disable_assertions(&acrt);
+  ASSERT_KIND(ON_FAIL_DISABLE_ASSERTIONS, acrt.on_fail.action_kind);
 
   return ASSERTION_PASSED;
 }

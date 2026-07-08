@@ -9,12 +9,20 @@
 
 </div>
 
-This is **acrt**, a C testing library.
+**acrt** is a C testing library that provides `<assert.h>`'s header similar features and was
+named with it's greatest api purpose: _assertions_.
 
-The major purpose is to provided pretty printing and good control of assertions (unit testing)
-using no thirdparty frameworks or other complex stuff.
+Inspired by [rust](https://doc.rust-lang.org/rust-by-example/testing/unit_testing.html) and
+[go lang](https://go.dev/doc/tutorial/add-a-test) testing environment, it runs assertions the same
+as other libraries but with a more detailed overview, strong behavior control and simple
+implementation.
 
-This library is under development and breaking changes aren't expected ~(but strongly possible)~.
+> [!NOTE]
+>
+> 1. This library is under development and made entirely with my academic/amateur knowledge. It was
+>    just a personal project and shouldn't be taken seriously.
+> 2. Using it professionally is strongly not recomended.
+> 3. breaking changes and weak retro-compatibility are possible, btw...
 
 ## Set up on machine
 

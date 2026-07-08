@@ -1,20 +1,29 @@
 #include "../src/acrt.h"
-#include <stdio.h>
 
-int main(void) {
-  // works but not recommended
-  acrt_t acrt = {0};
-  // use default initializer instead
-  acrt = acrt_new();
+int main(int argc, char *argv[]) {
+  // Macro as default constructor.
+  acrt_t acrt = ACRT_NEW();
 
-  // works:
-  acrt_bool(acrt, 1);
-  // compile error:
-  // acrt_bool(&acrt, 1);
+  // Assert any number like value.
+  ACRT_BOOL(&acrt, 1);
+  ACRT_BOOL(&acrt, (int)3.14);
 
-  // compiles but crashes the program.
-  // free(&acrt);
+  // Assert pointers.
+  int some_integer = 3;
+  int *int_ptr = &some_integer;
+  char *char_ptr = "my string";
+  ACRT_BOOL(&acrt, int_ptr);
+  ACRT_BOOL(&acrt, char_ptr);
 
-  printf("No free is required. All the objects are in the stack.\n");
+  // Assert dynamic values and use it as condition.
+  char *may_fail = argc > 1 ? argv[1] : NULL;
+
+  // BUG: This only succeeds when passing args to exe call.
+  if (ACRT_BOOL(&acrt, may_fail)) {
+    printf("may fail holds the '%s' string.\n\n", may_fail);
+  }
+
+  printf("All assertions \e[92mdone\e[0m with no errors...\n");
+
   return 0;
 }

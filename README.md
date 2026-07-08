@@ -24,6 +24,20 @@ implementation.
 > 2. Using it professionally is strongly not recomended.
 > 3. breaking changes and weak retro-compatibility are possible, btw...
 
+## Requirements
+
+This project requires:
+- a C compiler _([gcc](https://gcc.gnu.org/) preferable)_
+- [glibc](https://www.gnu.org/software/libc/) compatible implementor
+
+Install [mingw](https://sourceforge.net/projects/mingw) if on windows.
+
+> [!TIP]
+>
+> [make](https://www.gnu.org/software/make/) and [python](https://www.python.org/) commands were
+> used during development. They can turn the testing and installing processes into a less painful
+> experience.
+
 ## Set up on machine
 
 To get and use this library, you'll need:

@@ -98,22 +98,22 @@ acrt_t __acrt_default(const char *file_name, const char *function_name) {
 
 int __acrt_run_boolean_assertion_from_number(acrt_t *self,
                                              const unsigned int line,
-                                             int number) {
+                                             uintptr_t number) {
   EARLY_CHECKS(self);
 
   acrt_result_t temp =
-      acrt_result_from_int(context_name_as_str(self), line, number);
+      acrt_result_from_int(context_name_as_str(self), line, (int)number);
 
   return acrt_handle_result(self, &temp);
 }
 
 int __acrt_run_boolean_assertion_from_pointer(acrt_t *self,
                                               const unsigned int line,
-                                              void *pointer) {
+                                              uintptr_t address) {
   EARLY_CHECKS(self);
 
-  acrt_result_t temp =
-      acrt_result_from_single_pointer(context_name_as_str(self), line, pointer);
+  acrt_result_t temp = acrt_result_from_single_pointer(
+      context_name_as_str(self), line, (void *)address);
 
   return acrt_handle_result(self, &temp);
 }

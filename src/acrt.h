@@ -27,6 +27,7 @@
 #define _ACRT_H_
 
 // It's used since some function signatures requires 'FILE' type.
+#include <stdint.h>
 #include <stdio.h>
 
 // Assertion counting.
@@ -208,7 +209,7 @@ acrt_t __acrt_default(const char *, const char *);
 // It'll returns 1 if the number is any non-zero value.
 int __acrt_run_boolean_assertion_from_number(acrt_t *self,
                                              const unsigned int line,
-                                             int number);
+                                             uintptr_t number);
 
 // Run a boolean assertion over a void pointer value.
 //
@@ -218,7 +219,7 @@ int __acrt_run_boolean_assertion_from_number(acrt_t *self,
 // It'll returns 1 if pointer holding a non-null address.
 int __acrt_run_boolean_assertion_from_pointer(acrt_t *self,
                                               const unsigned int line,
-                                              void *pointer);
+                                              uintptr_t address);
 
 // Creates a new acrt struct. The naming and counter is set to default. You can
 // still set a custom name by using 'acrt_set_context_name' function.
@@ -226,11 +227,11 @@ int __acrt_run_boolean_assertion_from_pointer(acrt_t *self,
 
 // Runs a bool-like assertion.
 #define ACRT_BOOL(SELF, VALUE)                                                 \
-  __builtin_choose_expr(                                                       \
-      __builtin_classify_type((VALUE)) == 5,                                   \
-      __acrt_run_boolean_assertion_from_pointer((SELF), __LINE__,              \
-                                                (void *)(VALUE)),              \
-      __acrt_run_boolean_assertion_from_number((SELF), __LINE__, !!(VALUE)))
+  __builtin_choose_expr(__builtin_classify_type((VALUE)) == 5,                 \
+                        __acrt_run_boolean_assertion_from_pointer(             \
+                            (SELF), __LINE__, (uintptr_t)(VALUE)),             \
+                        __acrt_run_boolean_assertion_from_number(              \
+                            (SELF), __LINE__, (uintptr_t)(VALUE)))
 
 // Display the inner counting data. This function requires an acrt pointer + a
 // file target to diplay (stdout/stderr).

@@ -60,7 +60,9 @@ typedef struct {
   union {
 
     // Holds pointer address when 'kind == POINTER_BOOLEAN_ASSERTION_KIND'.
-    void *boolean_pointer;
+    void *single_pointer;
+
+    int integer_cast;
 
   } data;
 

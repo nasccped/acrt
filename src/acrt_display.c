@@ -131,13 +131,13 @@ void display_acrt_result(acrt_result_t *res) {
 
   switch (res->kind) {
   case INTEGER_BOOLEAN_ASSERTION_KIND:
-    const char *value_is = passed ? "non zero" : "zero";
-    fprintf(f, "%*svalue is %s.\n", padding, "", value_is);
+    fprintf(f, "%*svalue was cast to %d.\n", padding, "",
+            res->data.integer_cast);
     break;
 
   case POINTER_BOOLEAN_ASSERTION_KIND:
     fprintf(f, "%*svalue points to %p.\n", padding, "",
-            res->data.boolean_pointer);
+            (void *)res->data.single_pointer);
     break;
   }
   fprintf(f, "\n");

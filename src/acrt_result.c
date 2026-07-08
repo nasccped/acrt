@@ -40,6 +40,7 @@ acrt_result_t acrt_result_from_int(const char *name, const unsigned int line,
                                    int value) {
   return (acrt_result_t){.context = CTX(name, line),
                          .kind = INTEGER_BOOLEAN_ASSERTION_KIND,
+                         .data.integer_cast = value,
                          .status = value ? PASSED_ASSERTION_WITHOUT_WARNING
                                          : FAILED_ASSERTION};
 }
@@ -47,9 +48,9 @@ acrt_result_t acrt_result_from_int(const char *name, const unsigned int line,
 acrt_result_t acrt_result_from_single_pointer(const char *name,
                                               const unsigned int line,
                                               void *pointer) {
-  return (acrt_result_t){.context = {.name = name, .line = line},
+  return (acrt_result_t){.context = CTX(name, line),
                          .kind = POINTER_BOOLEAN_ASSERTION_KIND,
-                         .data.boolean_pointer = pointer,
+                         .data.single_pointer = pointer,
                          .status = pointer ? PASSED_ASSERTION_WITHOUT_WARNING
                                            : FAILED_ASSERTION};
 }

@@ -14,8 +14,14 @@ typedef struct __acrt_counting counting_t;
     if (!(SELF))                                                               \
       return 0;                                                                \
                                                                                \
-    if (GET_ON_FAIL((SELF)).action_kind == ON_FAIL_DISABLE_ASSERTIONS &&       \
-        (SELF)->previous_assertion_failed) {                                   \
+    int do_not_run =                                                           \
+        GET_ON_FAIL((SELF)).action_kind == ON_FAIL_DISABLE_ASSERTIONS;         \
+    do_not_run |= GET_ON_FAIL((SELF)).action_kind ==                           \
+                      ON_FAIL_RUN_CALLBACK_AND_DO_NOT_EXIT &&                  \
+                  !GET_ON_FAIL((SELF))                                         \
+                       .data.run_callback_and_do_not_exit.continue_assertions; \
+    do_not_run &= (SELF)->previous_assertion_failed;                           \
+    if (do_not_run) {                                                          \
       update_counting(&(SELF)->counting, &IGNORED_ASSERTION_RESULT);           \
       return 0;                                                                \
     }                                                                          \
@@ -35,8 +41,8 @@ typedef struct __acrt_counting counting_t;
 #define STR_OR_CTX_NAME_PLACEHOLDER(PTR)                                       \
   (PTR) ? (PTR) : "UNDEFINED CONTEXT NAME"
 
-// Handles the result stuff based on self inner state. Returns the int (passed,
-// failed or ignored) from the result itself.
+// Handles the result stuff based on self inner state. Returns the int
+// (passed, failed or ignored) from the result itself.
 int acrt_handle_result(acrt_t *self, acrt_result_t *result);
 
 // Performs the on_fail field action.

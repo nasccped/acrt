@@ -71,23 +71,23 @@ gcc $(find acrt/*.c) your_file.c -o your_output && your_output;
 
 ## Usage
 
-You can use the library with the `acrt_t` struct and it's macros:
-
+A simple usage demo:
 ```c
-acrt_t acrt = acrt_new();
+acrt_t acrt = ACRT_NEW();
 
-// boolean assertions
-acrt_bool(acrt, 1);
-acrt_bool(acrt, 2 != 0);
+// bool assertion
+ACRT_BOOL(&acrt, 2 > 1);
+ACRT_BOOL(&acrt, 0.1 + 0.2 != 0.3);
 
-char *s = "hello";
 // pointer assertions
-acrt_bool(acrt, s);
+char *s = "hello";
+ACRT_BOOL(&acrt, s);
 s = NULL;
-acrt_bool(acrt, !s);
+ACRT_BOOL(&acrt, !s);
 ```
 
-That was a short overview. Take a look at [usage](./USAGE.md) page for more details.
+Other demos and usage tips can be found at [examples](./examples) and [USAGE](./USAGE.md),
+respectively.
 
 ## License
 

@@ -25,9 +25,9 @@ jobs:
 
           # create release notes page
           RELEASENOTES="release-notes.md"
-          echo "# acrt $GITHUB_REF_NAME release" >  "$RELEASENOTES"
-          echo ""                                >> "$RELEASENOTES"
-          echo "**notes:**"                      >> "$RELEASENOTES"
+          echo "acrt $GITHUB_REF_NAME release" >  "$RELEASENOTES"
+          echo ""                               >> "$RELEASENOTES"
+          echo "**notes:**"                     >> "$RELEASENOTES"
           awk -v tag="## $GITHUB_REF_NAME" '
             { sub(/\r$/, "") }
             $0 == tag { found=1; next }

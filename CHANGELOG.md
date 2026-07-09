@@ -2,6 +2,12 @@
 
 acrt library changelog.
 
+## v0.0.7
+
+- add github workflow
+  - auto generate source code tar file when pushing tags
+  - auto generate release notes page when pushing tags
+
 ## v0.0.6
 
 - add license description at the top of source code

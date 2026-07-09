@@ -32,8 +32,20 @@ int acrt_result_is_passed(acrt_result_t *self) {
   if (!self)
     return 0;
 
-  return self->status == PASSED_ASSERTION_WITHOUT_WARNING ||
-         self->status == PASSED_ASSERTION_WITH_WARNING;
+  switch (self->status) {
+
+    // passed conditions
+  case PASSED_ASSERTION_WITHOUT_WARNING:
+  case PASSED_ASSERTION_WITH_WARNING:
+    return 1;
+
+    // failed conditions
+  case FAILED_ASSERTION:
+  case IGNORED_ASSERTION:
+    break;
+  }
+
+  return 0;
 }
 
 acrt_result_t acrt_result_from_int(const char *name, const unsigned int line,

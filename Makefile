@@ -31,4 +31,4 @@ $(OUT_DIR)/test-%.exe: $(TEST_DIR)/%.c $(SRC_FILES)
 $(OUT_DIR):
 	mkdir $@
 
-.PHONY: build-examples build-tests
+.PHONY: all build-examples build-tests

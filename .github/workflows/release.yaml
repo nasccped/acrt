@@ -1,0 +1,45 @@
+name: release acrt
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: create source archive
+        run: |
+          # create tar file
+          ACRTTAR="acrt-lib.tar.gz"
+          tar --transform="s|^src/|acrt/|" -czf "${ACRTTAR}" src/
+          echo "ACRTTAR=${ACRTTAR}" >> "$GITHUB_ENV"
+
+          # create release notes page
+          RELEASENOTES="release-notes.md"
+          echo "# acrt $GITHUB_REF_NAME release" >  "$RELEASENOTES"
+          echo ""                                >> "$RELEASENOTES"
+          echo "**notes:**"                      >> "$RELEASENOTES"
+          awk -v tag="## $GITHUB_REF_NAME" '
+            { sub(/\r$/, "") }
+            $0 == tag { found=1; next }
+            found && /^## / { exit }
+            found { print }' CHANGELOG.md >> "$RELEASENOTES"
+          echo "RELEASENOTES=${RELEASENOTES}" >> "$GITHUB_ENV"
+
+      - name: create github release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: ${{ env.RELEASENOTES }}
+          files: |
+            ${{ env.ACRTTAR }}
+            LICENSE
+            README.md

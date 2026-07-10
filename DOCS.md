@@ -26,7 +26,7 @@ The [Makefile](./Makefile) provide shorthands for exe compiling, just run:
 make build-tests
 ```
 
-All the files at [tests](./tests/) directory will be separated compiled and be placed at
+All the files at [tests](./tests/) directory will be compiled separately and be placed at
 `out/test-<ORIGINAL_NAME>.exe` output.
 
 > [!NOTE]

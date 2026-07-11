@@ -38,36 +38,32 @@ Install [mingw](https://sourceforge.net/projects/mingw) if on windows.
 > used during development. They can turn the testing and installing processes into a less painful
 > experience.
 
-## Set up on machine
+## Setting up
 
-To get and use this library, you'll need:
-- `git` program
-- `gcc` program
+You can download and use the source code directly from release packages:
 
-- clone the repository:
+If you're at Unix system, just run:
 ```sh
-git clone https://github.com/nasccped/acrt
-```
-- copy only the necessary stuff and then delete:
-```sh
-cp acrt/src path/to/your_code/acrt -r && rm -rf acrt;
-cd path/to/your_code
-```
-- compile (with all `c` files) and run:
-```sh
-gcc $(find acrt/*.c) your_file.c -o your_output && your_output;
+curl -O -L https://github.com/nasccped/acrt/releases/latest/download/acrt-lib.tar.gz && \
+  tar -xzf acrt-lib.tar.gz && \
+  rm acrt-lib.tar.gz
 ```
 
-> [!NOTE]
->
-> 1. Mentioned code above is `sh` compatible. Consider using a Makefile for 'auto-building'.
-> 2. There's also local examples and tests which you can run (requires `make`):
->    ```sh
->    make build-example;
->    make build-test;
->    ```
->    Binaries will be droped at `out` directory with `exmp`/`test` prefix (ends with `exe` extension
->    for Windows port).
+If you're at Windows Powershell, run this instead:
+```powershell
+Invoke-WebRequest `
+  -Uri "https://github.com/nasccped/acrt/releases/latest/download/acrt-lib.tar.gz" `
+  -OutFile "acrt-lib.tar.gz"; `
+tar -xzf acrt-lib.tar.gz; `
+rm acrt-lib.tar.gz;
+```
+
+You can also get, use and experiment it by using [git](https://git-scm.com/), of course:
+```sh
+git clone https://github.com/nasccped/acrt && cd acrt
+```
+
+_Take a look at [DOCS](./DOCS.md) page for testing and other tips..._
 
 ## Usage
 
@@ -86,7 +82,7 @@ s = NULL;
 ACRT_BOOL(&acrt, !s);
 ```
 
-Other demos and usage tips can be found at [examples](./examples) and [USAGE](./USAGE.md),
+Other demos and usage tips can be found at [examples](./examples) and [DOCS](./DOCS.md),
 respectively.
 
 ## License

@@ -2,6 +2,16 @@
 
 acrt library changelog.
 
+## v0.0.8
+
+- docs update
+  - update README to fit
+    [x] requirements
+    [x] set up
+    [x] usage
+    [x] new anchors
+  - update(move) usage to general docs
+
 ## v0.0.7
 
 - add github workflow

@@ -68,7 +68,7 @@ assertion_result_t skip_future_assertions();
 static acrt_t acrt;
 
 int main(void) {
-  acrt = ACRT_NEW();
+  acrt = ACRT_DEFAULT;
 
   GENERATE_TEST_CASES(tests, CAST_TO_ASSERT_FUNCTION(continue_assertions),
                       CAST_TO_ASSERT_FUNCTION(exit_program_with_exit_code),

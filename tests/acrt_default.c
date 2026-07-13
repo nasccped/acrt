@@ -13,7 +13,7 @@ assertion_result_t previous_assertion_failed();
 static acrt_t acrt;
 
 int main() {
-  acrt = ACRT_NEW();
+  acrt = ACRT_DEFAULT;
   GENERATE_TEST_CASES(tests, CAST_TO_ASSERT_FUNCTION(context_name),
                       CAST_TO_ASSERT_FUNCTION(counting),
                       CAST_TO_ASSERT_FUNCTION(display_mode),
@@ -28,10 +28,7 @@ assertion_result_t context_name() {
   ASSERT_EQ_INT("ContextNameKind", (int)CONTEXT_NAME_USE_FILE_NAME,
                 (int)CTX_NAME(acrt).kind);
   ASSERT_EQ_STRING("ContextNameFile", __FILE__, CTX_NAME(acrt).data.file);
-  // WARN: hardcoded since it was created at main function.
-  ASSERT_EQ_STRING("ContextNameFunction", "main", CTX_NAME(acrt).data.function);
-  ASSERT_EQ_STRING("ContextNameCustom", "UNDEFINED CONTEXT NAME",
-                   CTX_NAME(acrt).data.custom);
+  ASSERT("ContextNameCustom", CTX_NAME(acrt).data.custom == NULL);
 
   return ASSERTION_PASSED;
 }

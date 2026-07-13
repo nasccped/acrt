@@ -7,7 +7,7 @@ static void *integer_ptr = &universal_true;
 
 int main(int argc, char *argv[]) {
   // Macro as default constructor.
-  acrt_t acrt = ACRT_NEW();
+  acrt_t acrt = ACRT_DEFAULT;
 
   // Assert any number like value.
   ACRT_BOOL(&acrt, universal_true);

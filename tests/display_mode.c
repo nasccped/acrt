@@ -17,7 +17,7 @@ int main() {
 }
 
 assertion_result_t test_case_01() {
-  acrt = ACRT_NEW();
+  acrt = ACRT_DEFAULT;
   ASSERT_DISPLAY_MODE(DISPLAY_MODE_FAILED_ONLY);
 
   acrt_set_display_mode_to_all(&acrt);

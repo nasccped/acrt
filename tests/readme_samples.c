@@ -21,7 +21,7 @@ int main() {
 }
 
 assertion_result_t test_01() {
-  acrt_t acrt = ACRT_NEW();
+  acrt_t acrt = ACRT_DEFAULT;
 
   ACRT_BOOL(&acrt, 2 > 1);
   ACRT_BOOL(&acrt, 0.1 + 0.2 != 0.3);

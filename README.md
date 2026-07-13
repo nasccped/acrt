@@ -69,7 +69,7 @@ _Take a look at [DOCS](./DOCS.md) page for testing and other tips..._
 
 A simple usage demo:
 ```c
-acrt_t acrt = ACRT_NEW();
+acrt_t acrt = ACRT_DEFAULT;
 
 // bool assertion
 ACRT_BOOL(&acrt, 2 > 1);

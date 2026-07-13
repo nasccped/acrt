@@ -80,7 +80,7 @@ Context name refers to the context where `acrt_t` is located:
 ```c
 struct {
   enum { ... } kind;
-  union { const char *file, *function, *custom; } data;
+  union { const char *file, *custom; } data;
 } context_name;
 ```
 
@@ -88,7 +88,7 @@ The context name is used as _'scope identifier'_ for the created `acrt_t` and di
 assertion info (if needed). This helps to use and differ multiple `acrt_t`s, even when at same
 scope.
 
-All these fields are filled during `ACRT_NEW` macro call (take a look at [assertions](#assertions)
+All these fields are filled within `ACRT_DEFAULT` macro (take a look at [assertions](#assertions)
 section). `custom` field will point to the **default context name** string (doesn't matter since
 kind refers to `CONTEXT_NAME_USE_FILE_NAME` variant, which means that the displayed context will be
 `file` field by default).
@@ -148,7 +148,7 @@ update is required). It can also be reset to an initial state by using the
 Here's a simple example for boolean assertions:
 ```c
 int main() {
-  acrt_t acrt = ACRT_NEW();
+  acrt_t acrt = ACRT_DEFAULT;
   ACRT_BOOL(&acrt, 1);
   ACRT_BOOL(&acrt, "char pointer");
   ACRT_BOOL(&acrt, 2 < 3);
@@ -156,9 +156,8 @@ int main() {
 }
 ```
 
-First, we need to create a new `acrt_t` instance by calling the `ACRT_NEW` macro, which is just a
-wrapper for a `__acrt_default(__FILE__, __FUNCTION__)` call _(it's used to set default values to
-the `acrt_t` inner fields)_. Then, we can call the `ACRT_BOOL` macro.
+First, we need to create a new `acrt_t` instance by with the `ACRT_DEFAULT` macro. It returns an
+`acrt` default state directly in place.
 
 The first param must be an non-null `acrt_t` pointer, otherwise the program does nothing and the
 call returns `0`. The second param can be any _bool compatible_ value:
@@ -183,7 +182,7 @@ if (ACRT_BOOL(&acrt, heavy_pointer)) {
 
 ### Context name setters
 
-Three different context name setters are provided by the API:
+Two different context name setters are provided by the API:
 ```c
 // Sets context name kind to custom + takes custom name for current context. Only works when both
 // pointers are non-null + `strlen(name)` > 0.
@@ -191,9 +190,6 @@ void acrt_set_context_name_to_custom(acrt_t *self, const char *name);
 
 // Sets context name kind to file.
 void acrt_set_context_name_to_file(acrt_t *self);
-
-// Sets context name kind to function.
-void acrt_set_context_name_to_function(acrt_t *self);
 ```
 
 ### On fail setters

@@ -82,20 +82,6 @@ const char *context_name_as_str(acrt_t *self);
 // Updates the inner data of counting pointer based on a acrt result kind.
 void update_counting(counting_t *self, acrt_result_t *result);
 
-acrt_t __acrt_default(const char *file_name, const char *function_name) {
-  return (acrt_t){
-      .context_name = {.kind = CONTEXT_NAME_USE_FILE_NAME,
-                       .data = {.file = file_name,
-                                .function = function_name,
-                                .custom = STR_OR_CTX_NAME_PLACEHOLDER(NULL)}},
-      .counting = (counting_t){0},
-      .display_mode = DISPLAY_MODE_FAILED_ONLY,
-      .on_fail = {.action_kind = ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE,
-                  .data.code = 1},
-      .previous_assertion_failed = 0,
-  };
-}
-
 int __acrt_run_boolean_assertion_from_number(acrt_t *self,
                                              const unsigned int line,
                                              uintptr_t number) {
@@ -230,13 +216,6 @@ void acrt_set_context_name_to_file(acrt_t *self) {
   GET_CTX_NAME(self).kind = CONTEXT_NAME_USE_FILE_NAME;
 }
 
-void acrt_set_context_name_to_function(acrt_t *self) {
-  if (!self)
-    return;
-
-  GET_CTX_NAME(self).kind = CONTEXT_NAME_USE_FUNCTION_NAME;
-}
-
 const char *context_name_as_str(acrt_t *self) {
   if (!self)
     return NULL;
@@ -244,8 +223,6 @@ const char *context_name_as_str(acrt_t *self) {
   switch (GET_CTX_NAME(self).kind) {
   case CONTEXT_NAME_USE_FILE_NAME:
     return STR_OR_CTX_NAME_PLACEHOLDER(GET_CTX_NAME(self).data.file);
-  case CONTEXT_NAME_USE_FUNCTION_NAME:
-    return STR_OR_CTX_NAME_PLACEHOLDER(GET_CTX_NAME(self).data.function);
   case CONTEXT_NAME_USE_CUSTOM_NAME:
     return STR_OR_CTX_NAME_PLACEHOLDER(GET_CTX_NAME(self).data.custom);
   }

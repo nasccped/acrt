@@ -71,9 +71,6 @@ typedef struct {
       // Use the file name as name kind (default).
       CONTEXT_NAME_USE_FILE_NAME,
 
-      // Use the function name as name kind.
-      CONTEXT_NAME_USE_FUNCTION_NAME,
-
       // Use a custom naming specified by the user.
       CONTEXT_NAME_USE_CUSTOM_NAME
 
@@ -87,9 +84,6 @@ typedef struct {
 
           // Using __FILE__ as context name.
           *file,
-
-          // Using __FUNCTION__ as context name.
-          *function,
 
           // Using a custom name.
           *custom;
@@ -196,10 +190,6 @@ typedef struct {
 
 } acrt_t;
 
-// Create a new 'acrt_t' struct with the default inner values. This function
-// takes the __FILE__ and __FUNCTION__ strings (set into context_name fields).
-acrt_t __acrt_default(const char *, const char *);
-
 // Private function that runs a boolean assertion from a given number
 // (bool-compatible).
 //
@@ -223,7 +213,16 @@ int __acrt_run_boolean_assertion_from_pointer(acrt_t *self,
 
 // Creates a new acrt struct. The naming and counter is set to default. You can
 // still set a custom name by using 'acrt_set_context_name' function.
-#define ACRT_NEW() __acrt_default(__FILE__, __FUNCTION__)
+#define ACRT_DEFAULT                                                           \
+  (acrt_t) {                                                                   \
+    .context_name = {.kind = CONTEXT_NAME_USE_FILE_NAME,                       \
+                     .data = {.file = __FILE__, .custom = NULL}},              \
+    .counting = (struct __acrt_counting){0},                                   \
+    .display_mode = DISPLAY_MODE_FAILED_ONLY,                                  \
+    .on_fail = {.action_kind = ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE,            \
+                .data.code = 1},                                               \
+    .previous_assertion_failed = 0,                                            \
+  }
 
 // Runs a bool-like assertion.
 #define ACRT_BOOL(SELF, VALUE)                                                 \
@@ -299,8 +298,5 @@ void acrt_set_context_name_to_custom(acrt_t *self, const char *name);
 
 // Sets context name kind to 'CONTEXT_NAME_USE_FILE_NAME'.
 void acrt_set_context_name_to_file(acrt_t *self);
-
-// Sets context name kind to 'CONTEXT_NAME_USE_FUNCTION_NAME'.
-void acrt_set_context_name_to_function(acrt_t *self);
 
 #endif

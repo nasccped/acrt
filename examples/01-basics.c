@@ -3,12 +3,10 @@
 static int universal_true = 1;
 static double pi = 3.14;
 static char *text = "my string";
-static void *integer_ptr = &universal_true;
+static int *integer_ptr = &universal_true;
+static acrt_t acrt = ACRT_DEFAULT;
 
 int main(int argc, char *argv[]) {
-  // Macro as default constructor.
-  acrt_t acrt = ACRT_DEFAULT;
-
   // Assert any number like value.
   ACRT_BOOL(&acrt, universal_true);
   ACRT_BOOL(&acrt, pi);

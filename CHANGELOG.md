@@ -2,6 +2,15 @@
 
 acrt library changelog.
 
+## v0.0.9
+
+- replace `ACRT_NEW` macro by `ACRT_DEFAULT`
+  - placeholder for default instance instead of function call allowing global scope static
+    variables
+  - `function context name` field and setter must be remove to do this work `:^(`
+  - update [DOCS](./DOCS.md) [README](./README.md) samples, tests and examples due to change
+    mentioned above
+
 ## v0.0.8
 
 - docs update

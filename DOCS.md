@@ -1,5 +1,15 @@
 # acrt library documentation
 
+This page provides the `acrt` library code description as a whole. It covers the functions, macros
+and common types defined within the library source file. You can read it all the way or just use
+the following **table of contents**:
+
+- [about the library](#about-the-library)
+  - [structs](#structs)
+    - [`acrt`](#acrt-struct)
+    - [`acrt counting`](#acrt-counting-struct)
+    - [`acrt result`](#acrt-result-struct)
+
 - [unit tests](#unit-tests): a little about project's testing
   - [test building](#test-building): compiling properly
   - [test running](#test-running): running properly
@@ -15,6 +25,57 @@
   - [display mode setters](#display-mode-setters): setter functions referring to display mode field
   - [reset state setter](#reset-state-setter): reset the `acrt` assertions state to default
   - [counting display](#counting-display): display the counting table
+
+## About the library
+
+The `acrt` library was majorly made with the purpose of flexible assertions and runtime control.
+It's disposed as a couple of files but just including the library main header should be enough:
+```c
+#include "path/to/acrt.h"
+```
+
+### Structs
+
+This library currently provides two different structs:
+1. [`acrt_t`](#acrt-struct) which is visible and must be used as assertion manager
+2. [`acrt counting`](#acrt-counting-struct) which is _dunder private_ and stores the assertion
+   counting at runtime
+
+There's also the [`acrt_result`](#acrt-result-struct) which is defined at `acrt_result.h` and used
+only by `acrt.c` **local-scope** functions.
+
+#### `acrt` struct
+
+```c
+typedef struct { ... } acrt_t;
+```
+
+The `acrt` struct is defined by the `acrt_t` naming and it holds a bunch of anonymous `struct` /
+`enum` fields which helps the inner state _"unavailability"_.
+
+This value shouldn't be initialized or handled manually. Instead, the caller program should use the
+[`functions`](#functions) / [`macros`](#macros) provided by the header.
+
+#### `acrt counting` struct
+
+```c
+struct __acrt_counting { ... };
+```
+
+The `acrt counting` struct is a common type stored within an `acrt` struct instance and shared with
+`acrt` library implementors. It stores the counting of ran assertions + it's statuses as well.
+
+It's updated and checked at runtime by the functions defined at `acrt.c` file _(not visible)_.
+
+#### `acrt result` struct
+
+```c
+typedef struct { ... } acrt_result_t;
+```
+
+The `acrt result` isn't provided by library but used as a wrapper storing assertion result, kind
+and possible warnings. It's defined at `acrt_result.h` header and only included within dependents
+implementors.
 
 ## Unit tests
 

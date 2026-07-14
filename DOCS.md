@@ -9,6 +9,9 @@ the following **table of contents**:
     - [`acrt`](#acrt-struct)
     - [`acrt counting`](#acrt-counting-struct)
     - [`acrt result`](#acrt-result-struct)
+  - [macros](#macros)
+    - [`ACRT_DEFAULT`](#acrt_default-macro)
+    - [`ACRT_BOOL`](#acrt_bool-macro)
 
 - [unit tests](#unit-tests): a little about project's testing
   - [test building](#test-building): compiling properly
@@ -76,6 +79,89 @@ typedef struct { ... } acrt_result_t;
 The `acrt result` isn't provided by library but used as a wrapper storing assertion result, kind
 and possible warnings. It's defined at `acrt_result.h` header and only included within dependents
 implementors.
+
+### Macros
+
+The `acrt` lib provides a set of macros to use along type and function definitions:
+
+#### `ACRT_DEFAULT` macro
+
+```c
+#define ACRT_DEFAULT (acrt_t){ ... }
+```
+
+The `ACRT_DEFAULT` macro is a placeholder for an `acrt_t` instance with default fields. In previous
+versions, the `acrt_t` struct were built through the `__acrt_default( ... )` function call, but
+this doesn't allow a global scope initialized object, forcing the user to initialize it within the
+`main` or other function scope.
+
+> [!TIP]
+>
+> The `acrt_t` object inner state can be change by using the setter functions (read
+> [functions](#functions) section).
+
+#### `ACRT_BOOL` macro
+
+```c
+#define ACRT_BOOL(SELF, VALUE) ...
+```
+
+Runs a boolean assertion by taking an `acrt_t` pointer and a expression that can be evaluated to
+bool:
+```c
+acrt_t acrt = ACRT_DEFAULT;
+ACRT_BOOL(&acrt, 1);
+ACRT_BOOL(&acrt, 3 > 2);
+ACRT_BOOL(&acrt, "char pointer");
+...
+```
+
+This macro call is just a wrapper for a _dunder-private_ function defined at `acrt.h`. It actually
+converts the `VALUE` param to a `uintptr_t`, pass it as function param and re-cast to an `int` or
+`void *` depending on the type being asserted. That's the only way that I found to accept
+literal, pointer and numeric variables without compile warnings.
+
+In short, the assertion will be passed when given `VALUE` refers to non-zero / non `NULL`.
+
+##### Type casting
+
+As mentioned above, to turn the `VALUE` param acceptable, it must be cast to an `uintptr_t` value.
+In other words, if it can be casted with `(uintptr_t)(VALUE)` syntax, it's valid!
+
+> [!IMPORTANT]
+>
+> 1. This cast occurs at macro's expansion, so you don't need to prefix the expression value with
+>    casting type.
+> 2. The passed value is re-cast to `int` / `void *` depending on the value's type (which is also
+>    checked by the macro's expansion). This means that:
+>    - `-1` gonna be `-1`
+>    - `4.99` gonna be `4`
+>    - `"string"` or `pointer_variable` gonna be the address of it's data
+
+##### Return value
+
+The macro expansion is a function that returns an integer where:
+- `0` means failed assertion
+- `1` means passed assertion
+```c
+int value = 2;
+if (ACRT_BOOL(&acrt, value)) {
+  printf("The assertion with '%d' value is passed    :^)\n", value);
+} else {
+  printf("The assertion with '%d' value is failed    :^(\n", value);
+}
+```
+
+##### Panics
+
+When creating an `acrt_t` value with `ACRT_DEFAULT` macro, it's auto-set `on_fail` field to
+`ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE`, which means that the current process gonna be exited with
+the `1` exit code **at the first failed assertion**. This ensures program validity:
+
+> The next state probably won't be valid if it depends on a failed one.
+
+Change it with the **acrt on fail setter** functions (mentioned at [functions](#functions)
+section).
 
 ## Unit tests
 

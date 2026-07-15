@@ -17,16 +17,20 @@
 #define ASSERT_PASSED(EXPECTED)                                                \
   ASSERT_EQ_INT("ResultPassed", (EXPECTED), acrt_result_is_passed(&result))
 
+#define ASSERT_STATUS(EXPECTED)                                                \
+  ASSERT_EQ_INT("ResultStatus", (int)(EXPECTED), (int)result.status)
+
 assertion_result_t context_line();
 assertion_result_t context_name();
 assertion_result_t data();
 assertion_result_t passed();
 assertion_result_t result_kind();
+assertion_result_t warning();
 
 static acrt_result_t result;
 
 int main() {
-  RUN_TESTS(context_line, context_name, result_kind, data, passed);
+  RUN_TESTS(context_line, context_name, result_kind, data, passed, warning);
   return 0;
 }
 
@@ -91,6 +95,16 @@ assertion_result_t result_kind(void) {
 
   result = acrt_result_new_bool("", 1, (uintptr_t)NULL, 1);
   ASSERT_KIND(POINTER_BOOLEAN_ASSERTION_KIND);
+
+  return ASSERTION_PASSED;
+}
+
+assertion_result_t warning() {
+  result = acrt_result_new_bool("", 1, 1, 0);
+  ASSERT_STATUS(PASSED_ASSERTION_WITHOUT_WARNING);
+
+  result = acrt_result_new_bool("", 1, (uintptr_t)"string", 1);
+  ASSERT_STATUS(PASSED_ASSERTION_WITHOUT_WARNING);
 
   return ASSERTION_PASSED;
 }

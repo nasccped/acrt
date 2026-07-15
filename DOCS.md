@@ -7,6 +7,12 @@ the following **table of contents**:
 - [about the library](#about-the-library)
   - [structs](#structs)
     - [`acrt`](#acrt-struct)
+      - [`context_name`](#context_name-field)
+      - [`counting`](#counting-field)
+      - [`on_fail`](#on_fail-field)
+      - [`display_mode`](#display_mode-field)
+      - [`counting`](#counting-field)
+      - [`previous_assertion_failed`](#previous_assertion_failed-field)
     - [`acrt counting`](#acrt-counting-struct)
     - [`acrt result`](#acrt-result-struct)
   - [macros](#macros)
@@ -67,6 +73,106 @@ The `acrt` struct is defined by the `acrt_t` naming and it holds a bunch of anon
 
 This value shouldn't be initialized or handled manually. Instead, the caller program should use the
 [`functions`](#functions) / [`macros`](#macros) provided by the header.
+
+##### `context_name` field
+
+The context name stores the name held by the `acrt` object, such as:
+- `kind` on naming being used (`CONTEXT_NAME_USE_FILE_NAME` or `CONTEXT_NAME_USE_CUSTOM_NAME`)
+- `data.file` storing the `__FILE__` string value at `acrt` initialization
+- `data.custom` storing a custom string defined by the user
+
+This name is displayed at `stdout` / `stderr` followed by the assertion info, i. e:
+```txt
+This:
+100 |
+101 | ASSERT_BOOL(&acrt, NULL);
+102 |
+
+Prints this message:
+    |
+    | [<CONTEXT_NAME>: 101] boolean assertion failed
+    |                       value points to 0000000000000000.
+    |
+```
+
+By default (when using [`ACRT_DEFAULT`](#acrt_default-macro) macro), `<CONTEXT_NAME>` will refers
+to `__FILE__` (file name of `acrt` initialization), but you can set a custom name by using the
+[`acrt_set_context_name_to_custom`](#acrt_set_context_name_to_custom-function) function.
+
+##### `counting` field
+
+The `counting` is a struct ([`__acrt_counting`](#acrt-counting-struct)) that refers to an assertion
+counting. It stores:
+- total of assertions
+- total of passed assertions _(with(out) warnings)_
+- total of failed assertions
+- total of ignored assertions
+
+It's major purpose is to print a **counting table** to the output whenever necessary.
+
+##### `on_fail` field
+
+```c
+struct {
+  enum  { ... } action_kind;
+  union { ... } data;
+} on_fail;
+```
+
+The `on_fail` field is a tagged union where the `action_kind` refers to the action to be
+performed while `data` stores the actual data to be used by this action.
+
+When initializing a new `acrt_t` struct with the [`ACRT_DEFAULT`](#acrt_default-macro) macro, it
+comes with `{ .action_kind = ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE, .data.code = 1 }` but it can be
+changed through the `acrt_set_on_fail_<ACTION>` functions. Take a look at the
+[table of contents](#).
+
+The available options for `on_fail` field are:
+- `ON_FAIL_EXIT_PROGRAM_WITH_EXIT_CODE` which exits the current process at the next failed
+  assertion
+  - `data.code` is the value used as exit code (`int`)
+- `ON_FAIL_DISABLE_ASSERTIONS` which disable all following assertions after a failed one and
+  increments the [`counting.ignored`](#counting-field) field
+- `ON_FAIL_CONTINUE_ASSERTIONS` which continues all assertions normally (even after a failed one)
+- `ON_FAIL_PRINT_COUNTING_AND_EXIT_PROGRAM_WITH_EXIT_CODE` which prints the counting table (refers
+  to [`counting`](#acrt-counting-struct) struct) and exit the current process at the next failed
+  assertion
+  - `data.print_counting_and_exit.counting` is used as `counting` pointer when doing print stuff
+  - `data.print_counting_and_exit.code` is the value used as exit code (`int`)
+- `ON_FAIL_RUN_CALLBACK_AND_EXIT_WITH_EXIT_CODE` which runs a callback function pointer with an
+  optional argument, and then, exits the current process after a failed assertion
+  - `data.run_callback_and_exit.callback` is the function pointer used after the failed assertion
+  - `data.run_callback_and_exit.arg` is the param passed to the function mentioned above
+  - `data.run_callback_and_exit.code` is the exit code for the current process
+- `ON_FAIL_RUN_CALLBACK_AND_DO_NOT_EXIT` which does almost the same as the option above, but it
+  doesn't exits the current process
+  - `data.run_callback_and_do_not_exit.continue_assertions` is used to decide if following
+    assertions should be ignored or not after a failed one (working similar to `disable / continue`
+    options)
+
+##### `display_mode` field
+
+The `display_mode` field is a enum used to decide if an [`assertion result`](#acrt-result-struct)
+should (or not) be displayed. The default variant (when using [`ACRT_DEFAULT`](#acrt_default-macro)
+macro) is `DISPLAY_MODE_FAILED_ONLY` but it can be changed by an `acrt_set_display_mode_to_<MODE>`
+function (mentioned at [table of contents](#)).
+
+The available variants means:
+- `DISPLAY_MODE_FAILED_ONLY`: display only failed assertion(s)
+- `DISPLAY_MODE_ALL`: display all kind of assertions, even when passed
+- `DISPLAY_MODE_QUIET`: don't display any assertions, even when failed
+
+##### `counting` field
+
+The `counting` field refers to the [`counting`](#acrt-counting-struct) struct stored by the
+`acrt_t` item. Now, each `acrt_t` contains is _own counter_. This field is also updated at runtime
+by the local scoped `acrt.c`'s functions.
+
+##### `previous_assertion_failed` field
+
+`previous_assertion_failed` is just a boolean field that stores if the latest assertion was failed.
+It's used to decide if following assertions should (or not) be ran (with
+[`on_fail`](#on_fail-field) field, btw).
 
 #### `acrt counting` struct
 

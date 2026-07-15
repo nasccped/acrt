@@ -2,6 +2,18 @@
 
 acrt library changelog.
 
+## v0.0.10
+
+- docs:
+  - add better api description
+- tests:
+  - test invalid argument setter fail
+  - **(refactor)** replace two macro calls by a single one (`test_util.h`)
+  - test result status (if is warning)
+- refactor:
+  - replace two _dunder-private_ functions by a single one (`acrt.(c/h)`)
+  - replace two _equal-meaning_ constructor functions by a single one (`acrt_result.(c/h)`)
+
 ## v0.0.9
 
 - replace `ACRT_NEW` macro by `ACRT_DEFAULT`

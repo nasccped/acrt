@@ -52,21 +52,17 @@ int acrt_result_is_passed(acrt_result_t *self) {
   return 0;
 }
 
-acrt_result_t acrt_result_from_int(const char *name, const unsigned int line,
-                                   int value) {
-  acrt_result_t result = WITH_CTX_ONLY(name, line);
-  result.kind = INTEGER_BOOLEAN_ASSERTION_KIND;
-  result.data.integer_cast = value;
-  result.status = value ? PASSED_ASSERTION_WITHOUT_WARNING : FAILED_ASSERTION;
-  return result;
-}
-
-acrt_result_t acrt_result_from_single_pointer(const char *name,
-                                              const unsigned int line,
-                                              void *pointer) {
-  acrt_result_t result = WITH_CTX_ONLY(name, line);
-  result.kind = POINTER_BOOLEAN_ASSERTION_KIND;
-  result.data.single_pointer = pointer;
-  result.status = pointer ? PASSED_ASSERTION_WITHOUT_WARNING : FAILED_ASSERTION;
+acrt_result_t acrt_result_new_bool(const char *name, const unsigned int line,
+                                   uintptr_t value, int is_ptr) {
+  acrt_result_t result = {.context = {.name = name, .line = line},
+                          .status = value ? PASSED_ASSERTION_WITHOUT_WARNING
+                                          : FAILED_ASSERTION};
+  if (is_ptr) {
+    result.kind = POINTER_BOOLEAN_ASSERTION_KIND;
+    result.data.single_pointer = (void *)value;
+  } else {
+    result.kind = INTEGER_BOOLEAN_ASSERTION_KIND;
+    result.data.integer_cast = (int)value;
+  }
   return result;
 }

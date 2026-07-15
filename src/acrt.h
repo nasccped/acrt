@@ -190,26 +190,14 @@ typedef struct {
 
 } acrt_t;
 
-// Private function that runs a boolean assertion from a given number
-// (bool-compatible).
+// Private function that runs a boolean assertion from a given `uintptr_t`
+// value.
 //
 // It takes an acrt pointer (returns 0 if null), the current source code line,
-// and the number to be asserted.
-//
-// It'll returns 1 if the number is any non-zero value.
-int __acrt_run_boolean_assertion_from_number(acrt_t *self,
-                                             const unsigned int line,
-                                             uintptr_t number);
-
-// Run a boolean assertion over a void pointer value.
-//
-// It takse an acrt pointer (returns 0 if null), the current source code line,
-// and the pointer to be asserted.
-//
-// It'll returns 1 if pointer holding a non-null address.
-int __acrt_run_boolean_assertion_from_pointer(acrt_t *self,
-                                              const unsigned int line,
-                                              uintptr_t address);
+// the value being asserted and a 'is_ptr' conditional (refers to the
+// 'acrt_result_t' creation).
+int __acrt_run_boolean_assertion(acrt_t *self, const unsigned int line,
+                                 uintptr_t value, int is_ptr);
 
 // Creates a new acrt struct. The naming and counter is set to default. You can
 // still set a custom name by using 'acrt_set_context_name' function.
@@ -226,11 +214,8 @@ int __acrt_run_boolean_assertion_from_pointer(acrt_t *self,
 
 // Runs a bool-like assertion.
 #define ACRT_BOOL(SELF, VALUE)                                                 \
-  __builtin_choose_expr(__builtin_classify_type((VALUE)) == 5,                 \
-                        __acrt_run_boolean_assertion_from_pointer(             \
-                            (SELF), __LINE__, (uintptr_t)(VALUE)),             \
-                        __acrt_run_boolean_assertion_from_number(              \
-                            (SELF), __LINE__, (uintptr_t)(VALUE)))
+  __acrt_run_boolean_assertion((SELF), __LINE__, (uintptr_t)(VALUE),           \
+                               __builtin_classify_type((VALUE)) == 5)
 
 // Display the inner counting data. This function requires an acrt pointer + a
 // file target to diplay (stdout/stderr).

@@ -26,6 +26,8 @@
 #ifndef _ACRT_RESULT_H_
 #define _ACRT_RESULT_H_
 
+#include <stdint.h>
+
 // Super type (tagged enum) that holds the inner assertion state such as:
 // - context (name, line number)
 // - kind (boolean, eq, not_eq, ...)
@@ -93,15 +95,10 @@ typedef struct {
 // otherwise, returns zero.
 int acrt_result_is_passed(acrt_result_t *self);
 
-// Creates a new acrt_result from a int value
-// ('INTEGER_BOOLEAN_ASSERTION_KIND').
-acrt_result_t acrt_result_from_int(const char *name, const unsigned int line,
-                                   int value);
-
-// Creates a new acrt_result from a pointer ('POINTER_BOOLEAN_ASSERTION_KIND' by
-// default).
-acrt_result_t acrt_result_from_single_pointer(const char *name,
-                                              const unsigned int line,
-                                              void *pointer);
+// Creates a new acrt_result_t from 'uintptr_t' value. It also carries the
+// 'is_ptr' param which is used to defined the kind field (pointer / num-literal
+// assertion).
+acrt_result_t acrt_result_new_bool(const char *name, const unsigned int line,
+                                   uintptr_t value, int is_ptr);
 
 #endif

@@ -82,24 +82,12 @@ const char *context_name_as_str(acrt_t *self);
 // Updates the inner data of counting pointer based on a acrt result kind.
 void update_counting(counting_t *self, acrt_result_t *result);
 
-int __acrt_run_boolean_assertion_from_number(acrt_t *self,
-                                             const unsigned int line,
-                                             uintptr_t number) {
+int __acrt_run_boolean_assertion(acrt_t *self, const unsigned int line,
+                                 uintptr_t value, int is_ptr) {
   EARLY_CHECKS(self);
 
   acrt_result_t temp =
-      acrt_result_from_int(context_name_as_str(self), line, (int)number);
-
-  return acrt_handle_result(self, &temp);
-}
-
-int __acrt_run_boolean_assertion_from_pointer(acrt_t *self,
-                                              const unsigned int line,
-                                              uintptr_t address) {
-  EARLY_CHECKS(self);
-
-  acrt_result_t temp = acrt_result_from_single_pointer(
-      context_name_as_str(self), line, (void *)address);
+      acrt_result_new_bool(context_name_as_str(self), line, value, is_ptr);
 
   return acrt_handle_result(self, &temp);
 }

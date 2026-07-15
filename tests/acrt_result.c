@@ -26,13 +26,7 @@ assertion_result_t result_kind();
 static acrt_result_t result;
 
 int main() {
-  GENERATE_TEST_CASES(
-      tests, CAST_TO_ASSERT_FUNCTION(context_line),
-      CAST_TO_ASSERT_FUNCTION(context_name),
-      CAST_TO_ASSERT_FUNCTION(result_kind), CAST_TO_ASSERT_FUNCTION(data),
-      CAST_TO_ASSERT_FUNCTION(passed), CAST_TO_ASSERT_FUNCTION(result_kind));
-
-  RUN_TEST_CASES(tests, NULL);
+  RUN_TESTS(context_line, context_name, result_kind, data, passed);
   return 0;
 }
 

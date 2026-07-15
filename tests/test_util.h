@@ -13,7 +13,7 @@ typedef struct {
 } assertion_result_t;
 
 // Test assert function alias.
-typedef assertion_result_t (*assert_function_t)(void *);
+typedef assertion_result_t (*assert_function_t)();
 
 static char code_location[128];
 
@@ -83,24 +83,22 @@ static char code_location[128];
                        TO_STR_FUNC((EXPECTED)), TO_STR_FUNC((GOT)));           \
   }
 
-// Cast function pointer to 'assert_function_t'.
-#define CAST_TO_ASSERT_FUNCTION(FUNC) (assert_function_t)(FUNC)
-
-// Generate a test case array. This macros expects the identifier name +
-// variadic function pointer arguments.
-#define GENERATE_TEST_CASES(IDENTIFIER, ...)                                   \
-  assert_function_t IDENTIFIER[] = {__VA_ARGS__};
-
-// Runs the test case array. It takes the identifier (array name) and the
-// required args by this same function.
+// Macro that expects a set of valid 'assert_function_t' function pointers. It
+// automatically creates and run them.
 //
-// Note that this call only works if all func pointer holds the same func
-// signature.
-#define RUN_TEST_CASES(IDENTIFIER, ...)                                        \
-  for (size_t i = 0; i < (sizeof(IDENTIFIER) / sizeof(IDENTIFIER[0])); i++) {  \
-    assert_function_t current = (IDENTIFIER)[i];                               \
-    if (!ASSERTION_IS_PASSED(current(__VA_ARGS__)))                            \
-      return 1;                                                                \
-  }
+// Can conflict with naming scope.
+#define RUN_TESTS(...)                                                         \
+  do {                                                                         \
+    assert_function_t current, test_functions[] = {__VA_ARGS__};               \
+    size_t total_amount_of_funtions =                                          \
+        (sizeof(test_functions) / sizeof(test_functions[0]));                  \
+                                                                               \
+    for (size_t i = 0; i < total_amount_of_funtions; i++) {                    \
+      current = test_functions[i];                                             \
+                                                                               \
+      if (!ASSERTION_IS_PASSED(current()))                                     \
+        return 1;                                                              \
+    }                                                                          \
+  } while (0)
 
 #endif

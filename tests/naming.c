@@ -21,12 +21,7 @@ assertion_result_t invalid();
 assertion_result_t name_kind();
 
 int main(void) {
-  GENERATE_TEST_CASES(tests, CAST_TO_ASSERT_FUNCTION(custom),
-                      CAST_TO_ASSERT_FUNCTION(file_name),
-                      CAST_TO_ASSERT_FUNCTION(invalid),
-                      CAST_TO_ASSERT_FUNCTION(name_kind));
-  RUN_TEST_CASES(tests, NULL);
-
+  RUN_TESTS(custom, file_name, invalid, name_kind);
   return 0;
 }
 

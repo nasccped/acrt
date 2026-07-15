@@ -1,4 +1,3 @@
-// Include c file since we're looking for private func impls
 #include "../src/acrt.h"
 #include "test_util.h"
 
@@ -14,13 +13,8 @@ static acrt_t acrt;
 
 int main() {
   acrt = ACRT_DEFAULT;
-  GENERATE_TEST_CASES(tests, CAST_TO_ASSERT_FUNCTION(context_name),
-                      CAST_TO_ASSERT_FUNCTION(counting),
-                      CAST_TO_ASSERT_FUNCTION(display_mode),
-                      CAST_TO_ASSERT_FUNCTION(on_fail),
-                      CAST_TO_ASSERT_FUNCTION(previous_assertion_failed));
-  RUN_TEST_CASES(tests, NULL);
-
+  RUN_TESTS(context_name, counting, display_mode, on_fail,
+            previous_assertion_failed);
   return 0;
 }
 

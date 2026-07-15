@@ -15,8 +15,7 @@ assertion_result_t ghost_function() {
 assertion_result_t test_01();
 
 int main() {
-  GENERATE_TEST_CASES(tests, CAST_TO_ASSERT_FUNCTION(test_01));
-  RUN_TEST_CASES(tests, NULL);
+  RUN_TESTS(test_01);
   return 0;
 }
 

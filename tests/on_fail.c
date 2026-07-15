@@ -69,15 +69,9 @@ static acrt_t acrt;
 
 int main(void) {
   acrt = ACRT_DEFAULT;
-
-  GENERATE_TEST_CASES(tests, CAST_TO_ASSERT_FUNCTION(continue_assertions),
-                      CAST_TO_ASSERT_FUNCTION(exit_program_with_exit_code),
-                      CAST_TO_ASSERT_FUNCTION(print_counting_and_exit),
-                      CAST_TO_ASSERT_FUNCTION(run_callback_and_exit),
-                      CAST_TO_ASSERT_FUNCTION(run_callback_and_do_not_exit),
-                      CAST_TO_ASSERT_FUNCTION(skip_future_assertions));
-  RUN_TEST_CASES(tests, NULL);
-
+  RUN_TESTS(continue_assertions, exit_program_with_exit_code,
+            print_counting_and_exit, run_callback_and_exit,
+            run_callback_and_do_not_exit, skip_future_assertions);
   return 0;
 }
 

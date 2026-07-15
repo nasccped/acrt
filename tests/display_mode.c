@@ -10,9 +10,7 @@ static acrt_t acrt;
 assertion_result_t test_case_01();
 
 int main() {
-  GENERATE_TEST_CASES(tests, CAST_TO_ASSERT_FUNCTION(test_case_01));
-  RUN_TEST_CASES(tests, NULL);
-
+  RUN_TESTS(test_case_01);
   return 0;
 }
 

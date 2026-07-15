@@ -46,11 +46,7 @@ assertion_result_t total();
 
 int main() {
   acrt = ACRT_DEFAULT;
-  GENERATE_TEST_CASES(
-      tests, CAST_TO_ASSERT_FUNCTION(failed), CAST_TO_ASSERT_FUNCTION(ignored),
-      CAST_TO_ASSERT_FUNCTION(passed), CAST_TO_ASSERT_FUNCTION(total));
-  RUN_TEST_CASES(tests, NULL);
-
+  RUN_TESTS(failed, ignored, passed, total);
   return 0;
 }
 

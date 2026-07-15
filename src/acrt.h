@@ -238,6 +238,16 @@ int __acrt_run_boolean_assertion_from_pointer(acrt_t *self,
 // Does nothing if any of param is NULL.
 void acrt_display_counting(acrt_t *self, FILE *f);
 
+// Reset the assertions counting and previous_assertion_failed fields only.
+void acrt_reset_assertions_state(acrt_t *self);
+
+// Sets a custom name context to the self acrt pointer. The name parameter must
+// be a non-null/zero length string, otherwise, operation fails.
+void acrt_set_context_name_to_custom(acrt_t *self, const char *name);
+
+// Sets context name kind to 'CONTEXT_NAME_USE_FILE_NAME'.
+void acrt_set_context_name_to_file(acrt_t *self);
+
 // Set 'on fail' field to continue future assertions (even if the current one
 // fails).
 void acrt_set_on_fail_continue_assertions(acrt_t *self);
@@ -280,9 +290,6 @@ void acrt_set_on_fail_run_callback_without_exit(acrt_t *self,
                                                 void *arg,
                                                 int continue_assertions);
 
-// Reset the assertions counting and previous_assertion_failed fields only.
-void acrt_reset_assertions_state(acrt_t *self);
-
 // Set the acrt display mode field to 'DISPLAY_MODE_ALL' variant.
 void acrt_set_display_mode_to_all(acrt_t *self);
 
@@ -291,12 +298,5 @@ void acrt_set_display_mode_to_failed_only(acrt_t *self);
 
 // Set the acrt display mode field to 'DISPLAY_MODE_QUIET' variant.
 void acrt_set_display_mode_to_quiet(acrt_t *self);
-
-// Sets a custom name context to the self acrt pointer. The name parameter must
-// be a non-null/zero length string, otherwise, operation fails.
-void acrt_set_context_name_to_custom(acrt_t *self, const char *name);
-
-// Sets context name kind to 'CONTEXT_NAME_USE_FILE_NAME'.
-void acrt_set_context_name_to_file(acrt_t *self);
 
 #endif

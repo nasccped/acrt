@@ -17,11 +17,13 @@ static acrt_t acrt;
 
 assertion_result_t custom();
 assertion_result_t file_name();
+assertion_result_t invalid();
 assertion_result_t name_kind();
 
 int main(void) {
   GENERATE_TEST_CASES(tests, CAST_TO_ASSERT_FUNCTION(custom),
                       CAST_TO_ASSERT_FUNCTION(file_name),
+                      CAST_TO_ASSERT_FUNCTION(invalid),
                       CAST_TO_ASSERT_FUNCTION(name_kind));
   RUN_TEST_CASES(tests, NULL);
 
@@ -42,6 +44,18 @@ assertion_result_t custom() {
 assertion_result_t file_name() {
   acrt = ACRT_DEFAULT;
   ASSERT_FILE_NAME(__FILE__);
+  return ASSERTION_PASSED;
+}
+
+assertion_result_t invalid() {
+  acrt = ACRT_DEFAULT;
+
+  acrt_set_context_name_to_custom(&acrt, NULL);
+  ASSERT_NAME_KIND(CONTEXT_NAME_USE_FILE_NAME);
+
+  acrt_set_context_name_to_custom(&acrt, "");
+  ASSERT_NAME_KIND(CONTEXT_NAME_USE_FILE_NAME);
+
   return ASSERTION_PASSED;
 }
 

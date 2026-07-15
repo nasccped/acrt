@@ -37,25 +37,25 @@ int main() {
 }
 
 assertion_result_t context_line() {
-  result = acrt_result_from_int("", 2, 0);
+  result = acrt_result_new_bool("", 2, 0, 0);
   ASSERT_CONTEXT_LINE(2);
 
-  result = acrt_result_from_int("", 0, 0);
+  result = acrt_result_new_bool("", 0, 0, 0);
   ASSERT_CONTEXT_LINE(0);
 
-  result = acrt_result_from_int("", 20, 0);
+  result = acrt_result_new_bool("", 20, 0, 0);
   ASSERT_CONTEXT_LINE(20);
 
   return ASSERTION_PASSED;
 }
 
 assertion_result_t context_name() {
-  result = acrt_result_from_int(__FUNCTION__, 1, 42);
+  result = acrt_result_new_bool(__FUNCTION__, 1, 42, 0);
   // NOTE: since expected value is hardcoded, it needs to changed whenever func
   //       name also changes.
   ASSERT_CONTEXT_NAME("context_name");
 
-  result = acrt_result_from_int("a", 0, 0);
+  result = acrt_result_new_bool("a", 0, 0, 0);
   ASSERT_CONTEXT_NAME("a");
 
   return ASSERTION_PASSED;
@@ -63,39 +63,39 @@ assertion_result_t context_name() {
 
 assertion_result_t data(void) {
   char *string = "Some string";
-  result = acrt_result_from_single_pointer("", 2, string);
+  result = acrt_result_new_bool("", 2, (uintptr_t)string, 1);
   ASSERT_DATA(result.data.single_pointer == string);
 
-  result = acrt_result_from_int("", 22, 2);
+  result = acrt_result_new_bool("", 22, 2, 0);
   ASSERT_DATA(result.data.integer_cast == 2);
 
-  result = acrt_result_from_int("", 22, (int)7.99);
+  result = acrt_result_new_bool("", 22, (uintptr_t)7.99, 0);
   ASSERT_DATA(result.data.integer_cast == 7);
 
   return ASSERTION_PASSED;
 }
 
 assertion_result_t passed(void) {
-  result = acrt_result_from_int("", 2, 2);
+  result = acrt_result_new_bool("", 2, 2, 0);
   ASSERT_PASSED(1);
 
-  result = acrt_result_from_int("", 2, 0);
+  result = acrt_result_new_bool("", 2, 0, 0);
   ASSERT_PASSED(0);
 
-  result = acrt_result_from_single_pointer("", 2, "temp string");
+  result = acrt_result_new_bool("", 2, (uintptr_t)"temp string", 1);
   ASSERT_PASSED(1);
 
-  result = acrt_result_from_single_pointer("", 2, NULL);
+  result = acrt_result_new_bool("", 2, (uintptr_t)NULL, 1);
   ASSERT_PASSED(0);
 
   return ASSERTION_PASSED;
 }
 
 assertion_result_t result_kind(void) {
-  result = acrt_result_from_int("", 1, 1);
+  result = acrt_result_new_bool("", 1, 1, 0);
   ASSERT_KIND(INTEGER_BOOLEAN_ASSERTION_KIND);
 
-  result = acrt_result_from_single_pointer("", 1, NULL);
+  result = acrt_result_new_bool("", 1, (uintptr_t)NULL, 1);
   ASSERT_KIND(POINTER_BOOLEAN_ASSERTION_KIND);
 
   return ASSERTION_PASSED;

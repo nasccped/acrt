@@ -5,7 +5,7 @@ acrt library changelog.
 ## v0.0.10
 
 - docs:
-  - add better api description
+  - full api coverage
 - tests:
   - test invalid argument setter fail
   - **(refactor)** replace two macro calls by a single one (`test_util.h`)

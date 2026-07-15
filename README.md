@@ -22,7 +22,7 @@ implementation.
 > 1. This library is under development and made entirely with my academic/amateur knowledge. It was
 >    just a personal project and shouldn't be taken seriously.
 > 2. Using it professionally is strongly not recomended.
-> 3. breaking changes and weak retro-compatibility are possible, btw...
+> 3. Breaking changes and weak retro-compatibility are possible, btw...
 
 ## Requirements
 

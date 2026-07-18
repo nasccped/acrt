@@ -28,12 +28,10 @@ assertion_result_t context_name() {
 }
 
 assertion_result_t counting() {
-  ASSERT_EQ_INT("CountingPassedWithoutWarnings", 0,
-                acrt.counting.passed.without_warnings);
-  ASSERT_EQ_INT("CountingPassedWithWarnings", 0,
-                acrt.counting.passed.with_warnings);
+  ASSERT_EQ_INT("CountingPassed", 0, acrt.counting.passed);
   ASSERT_EQ_INT("CountingFailed", 0, acrt.counting.failed);
   ASSERT_EQ_INT("CountingIgnored", 0, acrt.counting.ignored);
+  ASSERT_EQ_INT("CountingWarnings", 0, acrt.counting.warning);
   ASSERT_EQ_INT("CountingTotal", 0, acrt.counting.total);
 
   return ASSERTION_PASSED;

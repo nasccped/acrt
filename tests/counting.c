@@ -18,10 +18,8 @@
 
 // Asserts the passed field of the counting struct. It takes a boolean warning
 // trigger (if it was passed with(out) warnings).
-#define ASSERT_PASSED(EXPECTED, WARNING)                                       \
-  ASSERT_EQ_INT("CountingPassed", (EXPECTED),                                  \
-                (WARNING) ? acrt.counting.passed.with_warnings                 \
-                          : acrt.counting.passed.without_warnings)
+#define ASSERT_PASSED(EXPECTED)                                                \
+  ASSERT_EQ_INT("CountingPassed", (EXPECTED), acrt.counting.passed)
 
 // Asserts the failed field of the counting struct.
 #define ASSERT_FAILED(EXPECTED)                                                \
@@ -63,43 +61,74 @@ assertion_result_t failed() {
   RUN_POINTER_ASSERTION("string");
   ASSERT_FAILED(2);
 
+  // reset
+  ACRT_SET_LOCAL_DEFAULT(0);
+
+  // test if ignoring assertions after first fail.
+  RUN_NUMBER_ASSERTION(1);
+  RUN_NUMBER_ASSERTION(0);
+  RUN_POINTER_ASSERTION("other string");
+  RUN_POINTER_ASSERTION(NULL);
+  ASSERT_FAILED(1);
+
   return ASSERTION_PASSED;
 }
 
 assertion_result_t ignored() {
-  ACRT_SET_LOCAL_DEFAULT(0);
+  // continue assertions by default.
+  ACRT_SET_LOCAL_DEFAULT(1);
 
   // One passes, one fail
   RUN_NUMBER_ASSERTION(1.2345);
   RUN_NUMBER_ASSERTION(0);
-  ASSERT_PASSED(1, WITHOUT_WARNINGS);
-  ASSERT_FAILED(1);
+  RUN_POINTER_ASSERTION("string again");
+  RUN_POINTER_ASSERTION(NULL);
+
+  // ignored must be zero.
   ASSERT_IGNORED(0);
+
+  // enable assertion ignoring.
+  ACRT_SET_LOCAL_DEFAULT(0);
 
   // All ignored since latest one was failed
   RUN_NUMBER_ASSERTION(1);
   RUN_NUMBER_ASSERTION(0);
   RUN_POINTER_ASSERTION("a");
   RUN_POINTER_ASSERTION(NULL);
-  ASSERT_PASSED(1, WITHOUT_WARNINGS);
+  ASSERT_PASSED(1);
   ASSERT_FAILED(1);
-  ASSERT_IGNORED(4);
+  ASSERT_IGNORED(2);
 
   return ASSERTION_PASSED;
 }
 
 assertion_result_t passed() {
-  ACRT_SET_LOCAL_DEFAULT(1);
+  ACRT_SET_LOCAL_DEFAULT(0);
 
   RUN_NUMBER_ASSERTION(1);
-  RUN_POINTER_ASSERTION(1);
-  ASSERT_PASSED(2, WITHOUT_WARNINGS);
+  RUN_POINTER_ASSERTION(NULL);
+  RUN_NUMBER_ASSERTION(1);
+  ASSERT_PASSED(1);
+
+  ACRT_SET_LOCAL_DEFAULT(1);
+  RUN_NUMBER_ASSERTION(1);
+  RUN_POINTER_ASSERTION(NULL);
+  RUN_NUMBER_ASSERTION(1);
+  ASSERT_PASSED(2);
 
   return ASSERTION_PASSED;
 }
 
 assertion_result_t total() {
   ACRT_SET_LOCAL_DEFAULT(0);
+
+  RUN_NUMBER_ASSERTION(1);
+  RUN_NUMBER_ASSERTION(0.0);
+  RUN_POINTER_ASSERTION(NULL);
+  RUN_POINTER_ASSERTION("other string");
+  ASSERT_TOTAL(4);
+
+  ACRT_SET_LOCAL_DEFAULT(1);
 
   RUN_NUMBER_ASSERTION(1);
   RUN_NUMBER_ASSERTION(0.0);

@@ -34,29 +34,20 @@
 struct __acrt_counting {
 
   unsigned int
+      // How many assertions was passed.
+      passed,
 
-      // Total of ran assertions.
-      total,
-
-      // Total of failed assertions.
+      // How many assertions was failed.
       failed,
 
-      // Total of ignored assertions (when 'ON_FAIL_SKIP_FUTURE_ASSERTIONS'
-      // is set).
-      ignored;
+      // How many assertions was ignored.
+      ignored,
 
-  // Total of passed assertions.
-  struct {
+      // How many assertions has warning.
+      warning,
 
-    unsigned int
-
-        // With warnings.
-        with_warnings,
-
-        // With no warnings (clean pass).
-        without_warnings;
-
-  } passed;
+      // Total of assertions
+      total;
 };
 
 // Acrt entrypoint.
@@ -197,7 +188,18 @@ typedef struct {
 // the value being asserted and a 'is_ptr' conditional (refers to the
 // 'acrt_result_t' creation).
 int __acrt_run_boolean_assertion(acrt_t *self, const unsigned int line,
-                                 uintptr_t value, int is_ptr);
+                                 intptr_t value, int is_ptr);
+
+// Private function that runs an 'equals' assertion by passing the 'left' and
+// the 'right' void pointer to the 'eq_func' which returns an integer, where:
+// - '0' means eq assertion failed
+// - '<OTHER>' means eq assertion passed
+//
+// Note that this function returns an integer where any non-zero value means
+// passed. It'll return zero if assertion failed, 'self' or 'eq_func' equals
+// NULL.
+int __acrt_run_eq_assertion(acrt_t *self, const unsigned int line, void *left,
+                            void *right, int (*eq_func)(void *, void *));
 
 // Creates a new acrt struct. The naming and counter is set to default. You can
 // still set a custom name by using 'acrt_set_context_name' function.
@@ -214,8 +216,12 @@ int __acrt_run_boolean_assertion(acrt_t *self, const unsigned int line,
 
 // Runs a bool-like assertion.
 #define ACRT_BOOL(SELF, VALUE)                                                 \
-  __acrt_run_boolean_assertion((SELF), __LINE__, (uintptr_t)(VALUE),           \
+  __acrt_run_boolean_assertion((SELF), __LINE__, (intptr_t)(VALUE),            \
                                __builtin_classify_type((VALUE)) == 5)
+
+// Runs an 'eq' assertion.
+#define ACRT_EQ(SELF, LEFT, RIGHT, EQ_FUNC)                                    \
+  __acrt_run_eq_assertion((SELF), __LINE__, (LEFT), (RIGHT), (EQ_FUNC))
 
 // Display the inner counting data. This function requires an acrt pointer + a
 // file target to diplay (stdout/stderr).

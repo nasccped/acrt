@@ -38,8 +38,12 @@ the following **table of contents**:
     - [private functions](#private-functions)
       - [`display_acrt_result`](#display_acrt_result-function-at-acrt_displayh)
       - [`display_counting_data`](#display_counting_data-function-at-acrt_displayh)
+      - [`acrt_result_get_kind_as_str`](#acrt_result_get_kind_as_str-function-at-acrt_resulth)
+      - [`acrt_result_is_ignored`](#acrt_result_is_ignored-function-at-acrt_resulth)
       - [`acrt_result_is_passed`](#acrt_result_is_passed-function-at-acrt_resulth)
+      - [`acrt_result_is_warning`](#acrt_result_is_warning-function-at-acrt_resulth)
       - [`acrt_result_new_bool`](#acrt_result_new_bool-function-at-acrt_resulth)
+      - [`acrt_result_new_eq`](#acrt_result_new_eq-function-at-acrt_resulth)
 - [testing](#testing)
   - [building](#test-building)
   - [running](#test-running)
@@ -104,9 +108,10 @@ to `__FILE__` (file name of `acrt` initialization), but you can set a custom nam
 The `counting` is a struct ([`__acrt_counting`](#acrt-counting-struct)) that refers to an assertion
 counting. It stores:
 - total of assertions
-- total of passed assertions _(with(out) warnings)_
+- total of passed assertions
 - total of failed assertions
 - total of ignored assertions
+- total of assertions with warnings
 
 It's major purpose is to print a **counting table** to the output whenever necessary.
 
@@ -447,16 +452,16 @@ Functions that are defined at `acrt.h` header but should only by used by macros'
 
 ```c
 int __acrt_run_boolean_assertion(acrt_t *self, const unsigned int line,
-                                 uintptr_t value, int is_ptr);
+                                 intptr_t value, int is_ptr);
 ```
 
 This function takes an `acrt_t` struct pointer, the source code line of current assertion and the
 `value` to be asserted.
 
-The `value` param must be an `uintptr_t` type to be later converted into an actual `int` or
-`void *` depending on the `is_ptr` param. This definition allows source code to be compiled without
-warnings since this function is used within the [`ACRT_BOOL`](#acrt_bool-macro) macro's expansion
-which can receive:
+The `value` param must be an `intptr_t` type to be later converted into an actual `int` or `void *`
+depending on the `is_ptr` param. This definition allows source code to be compiled without warnings
+since this function is used within the [`ACRT_BOOL`](#acrt_bool-macro) macro's expansion which can
+receive:
 - numeric literals
 - numeric variables
 - pointers
@@ -487,6 +492,22 @@ This function takes a context name, a `counting` pointer and a target `FILE` to 
 
 Does nothing if the `counting` or `f` param is `NULL`.
 
+##### `acrt_result_get_kind_as_str` function at `acrt_result.h`
+
+```c
+char *acrt_result_get_kind_as_str(acrt_result_t *self);
+```
+
+Returns the kind of assertion as string based on the `self` pointer inner state.
+
+##### `acrt_result_is_ignored` function at `acrt_result.h`
+
+```c
+int acrt_result_is_ignored(acrt_result_t *self);
+```
+
+Returns if the `self` acrt result kind refers to `IGNORED_ASSERTION_KIND`.
+
 ##### `acrt_result_is_passed` function at `acrt_result.h`
 
 ```c
@@ -498,16 +519,34 @@ status somehow refers to **passed** (even when with warnings).
 
 If `self` is `NULL`, returns `0`.
 
+##### `acrt_result_is_warning` function at `acrt_result.h`
+
+```c
+int acrt_result_is_warning(acrt_result_t *self);
+```
+
+This functions returns if the `self` acrt result refers to a warning result.
+
 ##### `acrt_result_new_bool` function at `acrt_result.h`
 
 ```c
 acrt_result_t acrt_result_new_bool(const char *name, const unsigned int line,
-                                   uintptr_t value, int is_ptr);
+                                   intptr_t value, int is_ptr);
 ```
 
 Creates a new [`acrt_result_t`](#acrt-result-struct) struct with `boolean` kind, the inner kind
 (`pointer` or `integer`), data and status are defined at function impl (`acrt_result.c`) based on
 `value` and `is_ptr` params.
+
+##### `acrt_result_new_eq` function at `acrt_result.h`
+
+```c
+acrt_result_t acrt_result_new_eq(const char *name, const unsigned int line,
+                                 void *left, void *right,
+                                 int (*eq_func)(void *, void *));
+```
+
+Creates a new [`acrt_result_t`](#acrt-result-struct) struct with `eq` kind.
 
 ## Testing
 

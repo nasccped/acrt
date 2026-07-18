@@ -83,11 +83,21 @@ const char *context_name_as_str(acrt_t *self);
 void update_counting(counting_t *self, acrt_result_t *result);
 
 int __acrt_run_boolean_assertion(acrt_t *self, const unsigned int line,
-                                 uintptr_t value, int is_ptr) {
+                                 intptr_t value, int is_ptr) {
   EARLY_CHECKS(self);
 
   acrt_result_t temp =
       acrt_result_new_bool(context_name_as_str(self), line, value, is_ptr);
+
+  return acrt_handle_result(self, &temp);
+}
+
+int __acrt_run_eq_assertion(acrt_t *self, const unsigned int line, void *left,
+                            void *right, int (*eq_func)(void *, void *)) {
+  EARLY_CHECKS(self);
+
+  acrt_result_t temp =
+      acrt_result_new_eq(context_name_as_str(self), line, left, right, eq_func);
 
   return acrt_handle_result(self, &temp);
 }
@@ -231,12 +241,21 @@ int acrt_handle_result(acrt_t *self, acrt_result_t *result) {
 }
 
 int acrt_should_display(acrt_t *self, acrt_result_t *result) {
-  if ((!self || !result) || (GET_DISPLAY(self) == DISPLAY_MODE_QUIET) ||
-      (GET_DISPLAY(self) == DISPLAY_MODE_FAILED_ONLY &&
-       result->status != FAILED_ASSERTION))
+  if (!self || !result)
     return 0;
-  else
+
+  switch (GET_DISPLAY(self)) {
+
+  case DISPLAY_MODE_FAILED_ONLY:
+    return !acrt_result_is_passed(result);
+
+  case DISPLAY_MODE_ALL:
     return 1;
+
+  case DISPLAY_MODE_QUIET:
+    break;
+  }
+  return 0;
 }
 
 void acrt_perform_on_fail(acrt_t *self) {
@@ -285,19 +304,19 @@ void update_counting(counting_t *self, acrt_result_t *result) {
   if (!self)
     return;
 
-  switch (result->status) {
-  case PASSED_ASSERTION_WITHOUT_WARNING:
-    self->passed.without_warnings++;
-    break;
-  case PASSED_ASSERTION_WITH_WARNING:
-    self->passed.with_warnings++;
-    break;
-  case FAILED_ASSERTION:
-    self->failed++;
-    break;
-  case IGNORED_ASSERTION:
+  int passed;
+
+  // if ignoring result.
+  if (acrt_result_is_ignored(result))
     self->ignored++;
-    break;
+
+  // else
+  else {
+    passed = acrt_result_is_passed(result);
+    self->passed += passed;
+    self->failed -= passed - 1;
+
+    self->warning += acrt_result_is_warning(result);
   }
 
   self->total++;

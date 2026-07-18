@@ -35,21 +35,6 @@
 #define RED(STR) "\x1b[91m" STR "\x1b[0m"
 #define YELLOW(STR) "\x1b[93m" STR "\x1b[0m"
 
-// Returns a string based on the 'kind' field.
-#define ASSERTION_KIND_STRING(KIND)                                            \
-  ((KIND) == POINTER_BOOLEAN_ASSERTION_KIND ||                                 \
-   (KIND) == INTEGER_BOOLEAN_ASSERTION_KIND)                                   \
-      ? "boolean"                                                              \
-      : "undefined"
-
-// Returns a string that represents the 'acrt_result.status' field.
-#define ASSERTION_STATUS_STRING(STTS)                                          \
-  (STTS) == PASSED_ASSERTION_WITHOUT_WARNING ? GREEN("passed")                 \
-  : (STTS) == PASSED_ASSERTION_WITH_WARNING                                    \
-      ? GREEN("passed") " with " YELLOW("warning")                             \
-  : (STTS) == FAILED_ASSERTION ? RED("failed")                                 \
-                               : YELLOW("ignored")
-
 // Prints the top/mid/bottom border line of a counting table. It takes a file to
 // display (stdout/stderr), the header with (HW) and a boolean (integer) meaning
 // if there's corners.
@@ -90,10 +75,16 @@
 
 // Returns status string for the acrt's 'counting' field.
 #define RESULT_COUNTING_STATUS(COUNTING)                                       \
-  !(COUNTING)->total                 ? BLACK("empty")                          \
-  : (COUNTING)->failed               ? RED("failed")                           \
-  : (COUNTING)->passed.with_warnings ? "partially " GREEN("passed")            \
-                                     : GREEN("passed")
+  !(COUNTING)->total    ? BLACK("empty")                                       \
+  : (COUNTING)->failed  ? RED("failed")                                        \
+  : (COUNTING)->warning ? "partially " GREEN("passed")                         \
+                        : GREEN("passed")
+
+// Expansion for 'result->data.boolean_assertion.value_kind'.
+#define RESULT_VALUE_KIND(RES) (RES)->data.boolean_assertion.kind
+
+// Expansion for 'result->data.eq_assertion.warning'.
+#define RESULT_WARNING(RES) (RES)->data.eq_assertion.warning
 
 typedef struct __acrt_counting counting_t;
 
@@ -114,15 +105,28 @@ void display_acrt_result(acrt_result_t *res) {
       // is assertion passed?
       passed,
       // left padding calc.
-      padding;
+      padding,
+      // If current assert leads to warning.
+      warning;
+  // generic pointer used at switch case statement
+  void *pointer;
+  // generic int used at switch case statement
+  int integer;
+
   // file to display
   FILE *f;
 
   passed = acrt_result_is_passed(res);
   f = passed ? stdout : stderr;
   ctx_name = res->context.name;
-  kind = ASSERTION_KIND_STRING(res->kind);
-  stts = ASSERTION_STATUS_STRING(res->status);
+  kind = acrt_result_get_kind_as_str(res);
+  warning = acrt_result_is_warning(res);
+
+  if (acrt_result_is_passed(res))
+    stts =
+        warning ? GREEN("passed") " with " YELLOW("warning") : GREEN("passed");
+  else
+    stts = warning ? RED("failed") " with " YELLOW("warning") : RED("failed");
 
   snprintf(line, sizeof(line), "%d", res->context.line);
   padding = (int)(strlen(ctx_name) + strlen(line) + 5);
@@ -130,14 +134,51 @@ void display_acrt_result(acrt_result_t *res) {
   fprintf(f, "[%s: %s] %s assertion %s\n", ctx_name, line, kind, stts);
 
   switch (res->kind) {
-  case INTEGER_BOOLEAN_ASSERTION_KIND:
-    fprintf(f, "%*svalue was cast to %d.\n", padding, "",
-            res->data.integer_cast);
+  case IGNORED_ASSERTION_KIND:
     break;
 
-  case POINTER_BOOLEAN_ASSERTION_KIND:
-    fprintf(f, "%*svalue points to %p.\n", padding, "",
-            (void *)res->data.single_pointer);
+  case BOOLEAN_ASSERTION_KIND:
+    if (RESULT_VALUE_KIND(res) == POINTER_VALUE_KIND) {
+      pointer = res->data.boolean_assertion.value.pointer;
+      fprintf(f, "%*svalue points to %p.\n", padding, "", pointer);
+    } else {
+      integer = res->data.boolean_assertion.value.integer;
+      fprintf(f, "%*svalue was cast to %d.\n", padding, "", integer);
+    }
+    break;
+
+  case EQ_ASSERTION_KIND:
+    if (warning) {
+      if (RESULT_WARNING(res) == EQ_FUNC_IS_NULL_WARNING)
+        fprintf(f, "%*seq function points to " RED("<NULL>"), padding, "");
+      else if (RESULT_WARNING(res) == SAME_ADDRESS_PARAMS_WARNING) {
+        pointer = res->data.eq_assertion.params.left;
+        fprintf(f, "%*sboth params points to same address: %p\n", padding, "",
+                pointer);
+        fprintf(
+            f,
+            "%*syou can use '" GREEN("ACRT_BOOL") "' when comparing addresses",
+            padding, "");
+      } else if (RESULT_WARNING(res) == SAME_ADDRESS_PARAMS_ARE_DIFF_WARNING) {
+        pointer = res->data.eq_assertion.params.left;
+        fprintf(f, "%*sboth params points to same address: %p\n", padding, "",
+                pointer);
+        fprintf(f, "%*sbut the eq function returned " RED("0") "\n", padding,
+                "");
+        fprintf(f, "%*sconsider reviewing your eq_func implementation!\n",
+                padding, "");
+      } else {
+        fprintf(f,
+                "%*s" RED("error") ": assert message display not implemented "
+                                   "for this variant: %d\n",
+                padding, "", RESULT_WARNING(res));
+      }
+    } else {
+      pointer = res->data.eq_assertion.params.left;
+      fprintf(f, "%*sleft value points to:  %p\n", padding, "", pointer);
+      pointer = res->data.eq_assertion.params.right;
+      fprintf(f, "%*sright value points to: %p\n", padding, "", pointer);
+    }
     break;
   }
   fprintf(f, "\n");
@@ -155,18 +196,6 @@ void display_counting_data(const char *ctx_name, counting_t *counting,
   // status string for the current counting
   const char *status;
 
-  unsigned int
-      // total of assertions passed with warnings
-      pww,
-      // total of assertion passed with no warnings
-      pwnw,
-      // total of failed assertions
-      fld,
-      // totla of ignored assertions
-      ignd,
-      // total of assertions
-      ttl;
-
   // header width
   int hw;
 
@@ -177,16 +206,10 @@ void display_counting_data(const char *ctx_name, counting_t *counting,
   fprintf(f, "| %s assertion status: %s |\n", ctx_name, status);
   PRINT_RESULT_COUNTING_TABLE_BORDER(f, hw, 0);
 
-  pww = counting->passed.with_warnings;
-  pwnw = counting->passed.without_warnings;
-  fld = counting->failed;
-  ignd = counting->ignored;
-  ttl = counting->total;
-
-  PRCTR(f, "passed (without warnings)", pwnw, hw);
-  PRCTR(f, "passed (with warnings)", pww, hw);
-  PRCTR(f, "failed", fld, hw);
-  PRCTR(f, "ignored", ignd, hw);
-  PRCTR(f, "total", ttl, hw);
+  PRCTR(f, "passed", counting->passed, hw);
+  PRCTR(f, "failed", counting->failed, hw);
+  PRCTR(f, "ignored", counting->ignored, hw);
+  PRCTR(f, "(scs/flr) with warning", counting->warning, hw);
+  PRCTR(f, "total", counting->total, hw);
   PRINT_RESULT_COUNTING_TABLE_BORDER(f, hw, 1);
 }

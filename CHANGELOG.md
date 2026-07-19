@@ -2,6 +2,19 @@
 
 acrt library changelog.
 
+## v0.1.0
+
+- fix:
+  - use `intptr_t` instead of `uintptr_t` to handle negatives.
+- refactor:
+  - `acrt_result_t`
+    - use a more elaborated anonymous fields
+    - better warning / success getters
+- docs:
+  - update docs to fit latest release changes
+- examples:
+  - add new cases
+
 ## v0.0.10
 
 - docs:
@@ -52,7 +65,7 @@ acrt library changelog.
   - setter functions
   - private implementation by using anonymous fields
 - remove outdated examples
-  - [ ] **todo:** replace it by new ones
+  - [x] **todo:** replace it by new ones
 
 ## v0.0.4
 

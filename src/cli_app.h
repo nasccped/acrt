@@ -4,11 +4,23 @@
 /* Refers to the app available fields. They're set within 'app_parse' function implementation (at
  * cli_app.c). */
 struct cli_app {
-  // NOTE: this code is temporary (just fast viewing).
+
+  /* Global options used at runtime. */
   struct {
-    int arg_count;
-    const char **args;
-  } action_data;
+
+    /* verbosity mode. Note that these two options are the inverse of each other. Using them in a
+     * row can leads to conflict behavior (treated at parsing). */
+    int verbose, quiet;
+
+  } global_options;
+
+  /* Kind of subcommand being ran. */
+  enum { NO_SPECIFIED, RUN_SUBCOMMAND } subcommand_kind;
+
+  /* Subcommand required data. */
+  union {
+    struct { const char *path; } run;
+  } subcommand;
 };
 
 /* Takes the user input (argc and argv) to parse it to the cli data structure and put all that data

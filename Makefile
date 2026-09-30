@@ -1,5 +1,6 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -Werror
+DEFINED_VALUES=-D_MK_REPO_URL='"$(shell git remote get-url origin)"'
 
 ifdef DEBUG
 	CFLAGS+=-g
@@ -21,7 +22,7 @@ $(BIN_DIR): $(OUT_DIR)
 	mkdir "$@"
 
 build: $(BIN_DIR)
-	$(CC) $(CFLAGS) $(BIN_SOURCES) -o "$(BIN_OUTPUT)"
+	$(CC) $(CFLAGS) $(DEFINED_VALUES) $(BIN_SOURCES) -o "$(BIN_OUTPUT)"
 
 $(BIN_OUTPUT): build
 

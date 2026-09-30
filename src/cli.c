@@ -1,6 +1,7 @@
 #include "cli.h"
 #include "flag_definition.h"
 #include "help_action.h"
+#include "version_action.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -151,6 +152,18 @@ int cli_run(struct cli *cli) {
     }
 
     run_help_action(code & FLAG_CODE_VERBOSE);
+  }
+
+  // if code refers to --version call
+  else if (code & FLAG_CODE_VERSION) {
+
+    if (path_count || (code ^ (FLAG_CODE_VERSION | (FLAG_CODE_VERBOSE & code)))) {
+      fputs("Error: the version flag accepts only the verbose switch.\n"
+            "Any other argument/flag is treated as invalid!\n", stderr);
+      return CLI_FAILURE;
+    }
+
+    run_version_action(code & FLAG_CODE_VERBOSE);
   }
 
   else {

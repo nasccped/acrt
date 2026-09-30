@@ -28,6 +28,10 @@ typedef enum {
   ARG_MODE_MALFORMED
 } argument_mode_t;
 
+/* Tries to parse a single argument. Gives parsing delegation to an auxiliar parse function
+ * depending on argument kind (long flag, short flag, not a flag). */
+static int argument_parse(cli_t *cli, int arg_index, char *argument);
+
 /* Helper function for long flags parsing. It expects the flag's long name identifier
  * (dash-exclusive) and returns an integer where:
  * - '0' means parse fail;
@@ -41,10 +45,6 @@ static int long_flag_parse(cli_t *cli, char *s);
 static int short_flag_parse(cli_t *cli, char *s);
 
 int cli_parse(cli_t *cli, int argc, char *argv[]) {
-  static char *arg, cur_char;
-  static int arg_offset;
-  static argument_mode_t arg_mode;
-
   // ignore first arg (refers to binary path).
   argc--;
   argv++;
@@ -64,73 +64,9 @@ int cli_parse(cli_t *cli, int argc, char *argv[]) {
   }
 
   for (int i = 0; i < argc; i++) {
-    arg_offset = 0;
-    arg = argv[i];
-    arg_mode = ARG_MODE_EMPTY_STRING;
 
-    // for each char (or until break)
-    for (size_t j = 0; j < strlen(arg); j++) {
-      cur_char = arg[j];
-
-      if (cur_char == ' ') {
-        arg_offset++;
-        continue;
-      }
-
-      else if (cur_char == '-') {
-        // if '-' is the first non-blank char
-        if (arg_mode == ARG_MODE_EMPTY_STRING)
-          arg_mode = ARG_MODE_SHORT_FLAG;
-
-        // if is '-' twice
-        else if (arg_mode == ARG_MODE_SHORT_FLAG)
-          arg_mode = ARG_MODE_LONG_FLAG;
-
-        // means third or more
-        else {
-          arg_mode = ARG_MODE_MALFORMED;
-          break;
-        }
-
-        arg_offset++;
-        continue;
-      }
-
-      // else, it isn't a flag.
-      else if (arg_mode == ARG_MODE_EMPTY_STRING)
-        arg_mode = ARG_MODE_NOT_A_FLAG;
-
-      // we can break at the end of scope since all if blocks have 'continue'.
-      break;
-    }
-
-    // behave based on arg_mode.
-    switch (arg_mode) {
-
-      case ARG_MODE_EMPTY_STRING:
-        fprintf(stderr, "Error: passing empty (%d° arg) strings isn't allowed!\n", i + 1);
-        HELP_FLAG_TIP(stderr);
-        return CLI_FAILURE;
-
-      case ARG_MODE_MALFORMED:
-        fprintf(stderr, "Error: malformed argument '%s'!\n", arg);
-        HELP_FLAG_TIP(stderr);
-        return CLI_FAILURE;
-
-      case ARG_MODE_SHORT_FLAG:
-        if (!short_flag_parse(cli, arg + arg_offset))
-          return CLI_FAILURE;
-        break;
-
-      case ARG_MODE_LONG_FLAG:
-        if (!long_flag_parse(cli, arg + arg_offset))
-          return CLI_FAILURE;
-        break;
-
-      case ARG_MODE_NOT_A_FLAG:
-        cli->paths[cli->path_count++] = arg + arg_offset;
-        break;
-    }
+    if (!argument_parse(cli, i, argv[i]))
+      return CLI_FAILURE;
   }
 
   return CLI_SUCCESS;
@@ -169,6 +105,78 @@ int cli_run(struct cli *cli) {
   else {
     fprintf(stderr, "TODO: implement other features...\n");
     return CLI_FAILURE;
+  }
+
+  return CLI_SUCCESS;
+}
+
+static int argument_parse(cli_t *cli, int arg_index, char *argument) {
+  static char cur_char;
+  static int arg_offset;
+  static arg_mode_t arg_mode;
+
+  // manual reset static variable.
+  arg_offset = 0;
+  arg_mode = ARG_MODE_EMPTY_STRING;
+
+  // for each char (or until break)
+  for (size_t i = 0; i < strlen(argument); i++) {
+    cur_char = argument[i];
+
+    if (cur_char == ' ') {
+      arg_offset++;
+      continue;
+    }
+
+    else if (cur_char == '-') {
+      // if '-' is the first non-blank char
+      if (arg_mode == ARG_MODE_EMPTY_STRING)
+        arg_mode = ARG_MODE_SHORT_FLAG;
+
+      // if is '-' twice
+      else if (arg_mode == ARG_MODE_SHORT_FLAG)
+        arg_mode = ARG_MODE_LONG_FLAG;
+
+      // means third or more
+      else {
+        arg_mode = ARG_MODE_MALFORMED;
+        break;
+      }
+
+      arg_offset++;
+      continue;
+    }
+
+    // else, it isn't a flag.
+    else if (arg_mode == ARG_MODE_EMPTY_STRING)
+      arg_mode = ARG_MODE_NOT_A_FLAG;
+
+    // we can break at the end of scope since all if blocks have 'continue'.
+    break;
+  }
+
+  // behave based on arg_mode.
+  switch (arg_mode) {
+
+    case ARG_MODE_EMPTY_STRING:
+      fprintf(stderr, "Error: passing empty (%d° arg) strings isn't allowed!\n", arg_index + 1);
+      HELP_FLAG_TIP(stderr);
+      return CLI_FAILURE;
+
+    case ARG_MODE_MALFORMED:
+      fprintf(stderr, "Error: malformed argument '%s'!\n", argument);
+      HELP_FLAG_TIP(stderr);
+      return CLI_FAILURE;
+
+    case ARG_MODE_SHORT_FLAG:
+      return short_flag_parse(cli, argument + arg_offset);
+
+    case ARG_MODE_LONG_FLAG:
+      return long_flag_parse(cli, argument + arg_offset);
+
+    case ARG_MODE_NOT_A_FLAG:
+      cli->paths[cli->path_count++] = argument + arg_offset;
+      break;
   }
 
   return CLI_SUCCESS;

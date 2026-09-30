@@ -1,5 +1,6 @@
 #include "cli.h"
 #include "flag_definition.h"
+#include "help_action.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -136,27 +137,25 @@ int cli_parse(cli_t *cli, int argc, char *argv[]) {
 
 
 int cli_run(struct cli *cli) {
-  // TODO: this code is just for preview purpose and must be updated.
-  static const flag_definition_t *fd;
+  flag_code_t code = cli->flags;
+  uint8_t path_count = cli->path_count;
 
-  printf("Called flags:\n");
+  // if code refers to --help call
+  if (code & FLAG_CODE_HELP) {
 
-  for (size_t i = 0; i < FLAG_COUNT; i++) {
-
-    fd = &FLAG_DEFINITIONS[i];
-    printf("  --%s", fd->long_name);
-
-    if (fd->short_name != 0) {
-      printf(" (-%c)", fd->short_name);
+    // check invalid items call.
+    if (path_count || (code ^ (FLAG_CODE_HELP | (FLAG_CODE_VERBOSE & code)))) {
+      fputs("Error: the help flag accepts only the verbose switch.\n"
+            "Any other argument/flag is treated as invalid!\n", stderr);
+      return CLI_FAILURE;
     }
 
-    printf(": %s\n", (fd->code & cli->flags) ? "yes" : "no");
+    run_help_action(code & FLAG_CODE_VERBOSE);
   }
 
-  printf("Called paths:\n");
-
-  for (uint8_t i = 0; i < cli->path_count; i++) {
-    printf("  %s\n", cli->paths[i]);
+  else {
+    fprintf(stderr, "TODO: implement other features...\n");
+    return CLI_FAILURE;
   }
 
   return CLI_SUCCESS;

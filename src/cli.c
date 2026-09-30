@@ -1,4 +1,5 @@
 #include "cli.h"
+#include "flag_definition.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,18 +9,13 @@
 #define CLI_FAILURE 0
 #define CLI_SUCCESS 1
 
-/* Flag code identifiers. */
-#define _FLAG_CODE_INIT   0b1
-#define FLAG_CODE_HELP    _FLAG_CODE_INIT << 0
-#define FLAG_CODE_VERSION _FLAG_CODE_INIT << 1
-#define FLAG_CODE_DRY_RUN _FLAG_CODE_INIT << 2
-
 /* Help tip placeholder. */
 #define HELP_FLAG_TIP(FILE) fprintf((FILE), "Consider using --help flag.\n")
 
 typedef uint8_t arg_mode_t;
 typedef struct cli cli_t;
 typedef uint8_t flag_code_t;
+typedef struct flag_definition flag_definition_t;
 
 /* Possible variants when trying to parse an argument. */
 typedef enum {
@@ -29,23 +25,6 @@ typedef enum {
   ARG_MODE_NOT_A_FLAG,
   ARG_MODE_MALFORMED
 } argument_mode_t;
-
-/* Flag definitions type (helps when parsing). */
-typedef struct {
-  char *long_name, short_name, *description;
-  flag_code_t code;
-} flag_definition_t;
-
-/* Flag definitions data. */
-static const flag_definition_t FLAG_DEFINITIONS[] = {
-  /* flag long name     flag short name     flag description                                           flag code        */
-  { "help",             'h',                "Displays the help panel",                                 FLAG_CODE_HELP    },
-  { "version",          'v',                "Display the program version",                             FLAG_CODE_VERSION },
-  { "dry-run",          'n',                "Simulated execution without actually running test cases", FLAG_CODE_DRY_RUN }
-};
-
-/* Keep track of how many flags were disposed. */
-static const size_t FLAG_COUNT = sizeof(FLAG_DEFINITIONS) / sizeof(flag_definition_t);
 
 /* Helper function for long flags parsing. It expects the flag's long name identifier
  * (dash-exclusive) and returns an integer where:

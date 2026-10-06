@@ -11,6 +11,7 @@
 
 typedef struct link_map link_map_t;
 typedef ElfW(Ehdr) elf_header_t;
+typedef ElfW(Shdr) section_header_t;
 
 int handle_so_path(char *so_path);
 void print_usage(char *bin_path);
@@ -36,6 +37,11 @@ int handle_so_path(char *so_path) {
   static void *handler;
   static link_map_t *link_map;
   static elf_header_t *elf_header;
+  static section_header_t *sh_strtab;
+
+  /* NOTE: Guarantees 32 bits usage since index can be either 'ElfN_Ehdr.e_shstrndx' (uint16_t) or
+   * 'ElfN_Shdr.sh_link' (uint32_t) field. */
+  static uint32_t sh_strtab_index;
 
   if (!(handler = dlopen(so_path, RTLD_NOW))) {
     eprintf("Error: '%s' opening failed (maybe not elf/shared object)!\n", so_path);
@@ -49,10 +55,31 @@ int handle_so_path(char *so_path) {
 
   elf_header = (elf_header_t *)link_map->l_addr;
 
-  printf("ELF data:\n");
-  printf("  Type: %s\n", elf_header->e_type == ET_DYN ? "dynamic" : "not dynamic");
-  printf("  Machine: %u\n", elf_header->e_machine);
-  printf("  Entry: 0x%lx\n", (unsigned long)elf_header->e_entry);
+  /* The section header string table index is handled following documentation provided by the elf
+   * man pages! */
+  switch (elf_header->e_shstrndx) {
+
+    /* Undefined index means no string table section. */
+    case SHN_UNDEF:
+      eprintf("Error: '%s' .so file doesn't provides '.shstrtab' section!\n", so_path);
+      return 0;
+
+    /* SHN_XINDEX means equals/larger than SHN_LORESERVE, so, real index is placed at sh_link field
+     * of the first entry of section header table. */
+    case SHN_XINDEX:
+      sh_strtab_index = ((section_header_t *)(elf_header + elf_header->e_shoff))->sh_link;
+      break;
+
+    default:
+      sh_strtab_index = (uint32_t)elf_header->e_shstrndx;
+      break;
+  }
+
+  sh_strtab = (section_header_t *)(elf_header
+                                  + elf_header->e_shoff
+                                  + (sh_strtab_index * elf_header->e_shentsize));
+
+  printf("Section header string table address: %p\n", sh_strtab);
 
   dlclose(handler);
   return 1;

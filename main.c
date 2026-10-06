@@ -1,56 +1,64 @@
+#include "custom.h"
+
 #include <dlfcn.h>
+#include <link.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* Alias for stderr printing. */
 #define eprintf(ARGS...) fprintf(stderr, ARGS)
 
-void print_usage(void);
+typedef struct link_map link_map_t;
+typedef ElfW(Ehdr) elf_header_t;
+
+int handle_so_path(char *so_path);
+void print_usage(char *bin_path);
 
 int main(int argc, char *argv[]) {
-  static int func_count, exit_code;
-  static char *so_path, **functions;
-  static void *so_handler, (*func_ptr)(void);
-
-  exit_code = EXIT_SUCCESS;
+  static int exit_code = EXIT_SUCCESS;
 
   if (argc < 2) {
     eprintf("Bad usage!\n\n");
-    print_usage();
+    print_usage(argv[0]);
     return EXIT_FAILURE;
   }
 
-  so_path = argv[1];
-  functions = argv + 2;
-  func_count = argc - 2;
-
-  if (!(so_handler = dlopen(so_path, RTLD_NOW))) {
-    eprintf("Failed to open %s handler!\n", so_path);
-    return EXIT_FAILURE;
+  for (int i = 1; i < argc; i++) {
+    if (!handle_so_path(argv[i]))
+      exit_code = EXIT_FAILURE;
   }
-
-  printf("Calling %d functions from %s:\n", func_count, so_path);
-
-  for (int i = 0; i < func_count; i++) {
-    printf(" >>> [%d] %s", i, functions[i]);
-
-    if (!(func_ptr = (void (*)(void)) dlsym(so_handler, functions[i]))) {
-      printf(" failed to open.\n");
-      exit_code |= EXIT_FAILURE;
-      continue;
-    } else {
-      printf("\n");
-    }
-
-    func_ptr();
-  }
-
-  dlclose(so_handler);
 
   return exit_code;
 }
 
-void print_usage(void) {
-  eprintf("This program calls a shared object's functions.\n\n");
-  eprintf("Usage: <SO_PATH> [func1 func2 ...]\n");
+int handle_so_path(char *so_path) {
+  static void *handler;
+  static link_map_t *link_map;
+  static elf_header_t *elf_header;
+
+  if (!(handler = dlopen(so_path, RTLD_NOW))) {
+    eprintf("Error: '%s' opening failed (maybe not elf/shared object)!\n", so_path);
+    return 0;
+  }
+
+  else if (dlinfo(handler, RTLD_DI_LINKMAP, (void **) &link_map) != 0) {
+    eprintf("Error: '%s' link map extraction failed!\n", so_path);
+    return 0;
+  }
+
+  elf_header = (elf_header_t *)link_map->l_addr;
+
+  printf("ELF data:\n");
+  printf("  Type: %s\n", elf_header->e_type == ET_DYN ? "dynamic" : "not dynamic");
+  printf("  Machine: %u\n", elf_header->e_machine);
+  printf("  Entry: 0x%lx\n", (unsigned long)elf_header->e_entry);
+
+  dlclose(handler);
+  return 1;
+}
+
+void print_usage(char *bin_path) {
+  eprintf("This program calls shared object functions at %s.\n\n", CUSTOM_SECTION_NAME);
+  eprintf("Usage: %s [.so files...]\n", bin_path);
 }

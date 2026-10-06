@@ -1,9 +1,11 @@
+#include "custom.h"
+
 #include <stdio.h>
 
-void print_foo(void) {
+CUSTOM_FUNCTION(foo) {
   printf("Foo...\n");
 }
 
-void print_bar(void) {
+CUSTOM_FUNCTION(bar) {
   printf("Bar...\n");
 }

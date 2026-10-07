@@ -17,6 +17,13 @@ typedef ElfW(Shdr) section_header_t;
 typedef ElfW(Off) elf_offset_t;
 typedef struct stat stat_t;
 
+/* Returns the section name as string. Note that this function requires elf_header and the shstrtab
+ * section pointer since initial pointers are necessary for char pointer offset calculation. This
+ * function also doesn't handle the 'index' value safety, so, overflowing will obviously crash the
+ * program. */
+char *get_section_header_name(elf_header_t *elf_header,
+                              section_header_t *shstrtab,
+                              uint32_t index);
 int handle_so_path(char *so_path);
 void print_usage(char *bin_path);
 
@@ -37,6 +44,12 @@ int main(int argc, char *argv[]) {
   return exit_code;
 }
 
+char *get_section_header_name(elf_header_t *elf_header,
+                              section_header_t *shstrtab,
+                              uint32_t index) {
+  return (char *)((elf_offset_t)elf_header + shstrtab->sh_offset + (elf_offset_t)index);
+}
+
 int handle_so_path(char *so_path) {
   /* fields related to open and mmap. */
   static int file_descriptor;
@@ -48,7 +61,8 @@ int handle_so_path(char *so_path) {
 
   static elf_header_t *elf_header;
   static section_header_t *shstrtab;
-  static char *section_name;
+  static section_header_t *custom_section;
+  static uint32_t custom_section_index;
 
   /* NOTE: Guarantees 32 bits usage since index can be either 'ElfN_Ehdr.e_shstrndx' (uint16_t) or
    * 'ElfN_Shdr.sh_link' (uint32_t) field. */
@@ -114,13 +128,31 @@ int handle_so_path(char *so_path) {
     + ((elf_offset_t)elf_header->e_shentsize * (elf_offset_t)shstrtab_index)
   );
 
-  /* get .shstrtab section name. */
-  section_name = (char *)(
-    (elf_offset_t)elf_header + shstrtab->sh_offset + (elf_offset_t)shstrtab->sh_name
-  );
+  char *section_name;
 
-  printf("shstrtab ptr: %p\n", shstrtab);
-  printf("shstrtab section name: %s\n", section_name);
+  for (custom_section_index = 0;
+       custom_section_index < elf_header->e_shnum;
+       custom_section_index++) {
+    custom_section = (section_header_t *)(
+      (elf_offset_t)elf_header
+      + elf_header->e_shoff
+      + (elf_offset_t)(custom_section_index * elf_header->e_shentsize)
+    );
+    section_name = get_section_header_name(elf_header, shstrtab, custom_section->sh_name);
+
+    if (strncmp(section_name, CUSTOM_SECTION_NAME, strlen(CUSTOM_SECTION_NAME) - 1) == 0)
+      break;
+
+    custom_section = NULL;
+  }
+
+  if (!custom_section) {
+    printf("Warning: '%s' doesn't provide '%s' on ELF sections!\n", so_path, CUSTOM_SECTION_NAME);
+    munmap(file_map, file_stat.st_size);
+    return 1;
+  }
+
+  printf("%s index: %3d (%p)\n", section_name, custom_section_index, custom_section);
 
   munmap(file_map, file_stat.st_size);
   return 1;

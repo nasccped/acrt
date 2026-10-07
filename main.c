@@ -114,7 +114,8 @@ int handle_so_path(char *so_path) {
     /* SHN_XINDEX means equals/larger than SHN_LORESERVE, so, real index is placed at sh_link field
      * of the first entry of section header table. */
     case SHN_XINDEX:
-      shstrtab_index = ((section_header_t *)((elf_offset_t)elf_header + elf_header->e_shoff))->sh_link;
+      shstrtab_index = ((section_header_t *)(
+        (elf_offset_t)elf_header + elf_header->e_shoff))->sh_link;
       break;
 
     default:

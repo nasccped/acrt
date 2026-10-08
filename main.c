@@ -9,6 +9,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#define MAX(L, R) ((L) > (R)) ? (L) : (R)
+#define SYMBOL_TABLE_IDENTIFIER ".symtab"
+
 /* Alias for stderr printing. */
 #define eprintf(ARGS...) fprintf(stderr, ARGS)
 
@@ -16,6 +19,7 @@ typedef ElfW(Ehdr) elf_header_t;
 typedef ElfW(Shdr) section_header_t;
 typedef ElfW(Off) elf_offset_t;
 typedef struct stat stat_t;
+typedef ElfW(Sym) symbol_table_t;
 
 /* Returns the section name as string. Note that this function requires elf_header and the shstrtab
  * section pointer since initial pointers are necessary for char pointer offset calculation. This
@@ -61,8 +65,12 @@ int handle_so_path(char *so_path) {
 
   static elf_header_t *elf_header;
   static section_header_t *shstrtab;
-  static section_header_t *custom_section;
-  static uint32_t custom_section_index;
+  static symbol_table_t *symtab;
+  static uint64_t symbol_count;
+
+  /* NOTE: we need to use 64 bits for section index storing, so 'custom section not found' can be
+   * expressed as -1 without messing with uint32_t most significant bit. */
+  static int64_t custom_section_index;
 
   /* NOTE: Guarantees 32 bits usage since index can be either 'ElfN_Ehdr.e_shstrndx' (uint16_t) or
    * 'ElfN_Shdr.sh_link' (uint32_t) field. */
@@ -129,31 +137,57 @@ int handle_so_path(char *so_path) {
     + ((elf_offset_t)elf_header->e_shentsize * (elf_offset_t)shstrtab_index)
   );
 
+  /* -1 meaning custom section not found. Init aux tables as null. */
+  custom_section_index = -1;
+  symtab = NULL;
+
+  /* auxiliar variables for section searching. */
+  section_header_t *current_section;
   char *section_name;
 
-  for (custom_section_index = 0;
-       custom_section_index < elf_header->e_shnum;
-       custom_section_index++) {
-    custom_section = (section_header_t *)(
-      (elf_offset_t)elf_header
-      + elf_header->e_shoff
-      + (elf_offset_t)(custom_section_index * elf_header->e_shentsize)
-    );
-    section_name = get_section_header_name(elf_header, shstrtab, custom_section->sh_name);
-
-    if (strncmp(section_name, CUSTOM_SECTION_NAME, strlen(CUSTOM_SECTION_NAME) - 1) == 0)
+  for (uint32_t i = 0; i < elf_header->e_shnum; i++) {
+    /* when custom section index + symtab already find. */
+    if ((custom_section_index >= 0) && symtab)
       break;
 
-    custom_section = NULL;
+    current_section = (section_header_t *)(
+      (elf_offset_t)elf_header
+      + elf_header->e_shoff
+      + (elf_offset_t)(i * elf_header->e_shentsize)
+    );
+    section_name = get_section_header_name(elf_header, shstrtab, current_section->sh_name);
+
+    /* If current section refers to the custom section. */
+    if (strcmp(section_name, CUSTOM_SECTION_NAME) == 0)
+      custom_section_index = (int64_t)i;
+
+    /* If current section refers to the symtab section. */
+    else if (strcmp(section_name, SYMBOL_TABLE_IDENTIFIER) == 0) {
+      symtab = (symbol_table_t *)(
+        (elf_offset_t)elf_header
+        + current_section->sh_offset
+      );
+      symbol_count = current_section->sh_size / current_section->sh_entsize;
+    }
   }
 
-  if (!custom_section) {
+  /* if custom section not found. */
+  if (custom_section_index < 0) {
     printf("Warning: '%s' doesn't provide '%s' on ELF sections!\n", so_path, CUSTOM_SECTION_NAME);
     munmap(file_map, file_stat.st_size);
     return 1;
   }
 
-  printf("%s index: %3d (%p)\n", section_name, custom_section_index, custom_section);
+  /* if symbol table head pointer not found. */
+  else if (!symtab) {
+    eprintf("Error: couldn't find '%s' section on '%s'!\n", SYMBOL_TABLE_IDENTIFIER, so_path);
+    munmap(file_map, file_stat.st_size);
+    return 0;
+  }
+
+  printf("%s index: %ld\n", CUSTOM_SECTION_NAME, custom_section_index);
+  printf("%s head address: %p\n", SYMBOL_TABLE_IDENTIFIER, symtab);
+  printf("symbol count: %ld\n", symbol_count);
 
   munmap(file_map, file_stat.st_size);
   return 1;

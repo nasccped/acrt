@@ -92,6 +92,7 @@ This documentation talks about (mainly) the test cases handling strategies.
 ## Resources
 
 Resources that helped me during development/documentation:
+- [draw.io](https://www.drawio.com/) for diagram drawing;
 - [how to execute an object file](https://blog.cloudflare.com/how-to-execute-an-object-file-part-1/)
   at Cloudflare (by [Ignat Korchagin](https://blog.cloudflare.com/author/ignat/));
 - `elf` manual pages disposed by my wsl (also available

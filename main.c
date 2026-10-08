@@ -1,5 +1,6 @@
 #include "custom.h"
 
+#include <dlfcn.h>
 #include <fcntl.h>
 #include <link.h>
 #include <stdio.h>
@@ -11,6 +12,7 @@
 
 #define MAX(L, R) ((L) > (R)) ? (L) : (R)
 #define SYMBOL_TABLE_IDENTIFIER ".symtab"
+#define STR_TABLE_IDENTIFIER ".strtab"
 
 /* Alias for stderr printing. */
 #define eprintf(ARGS...) fprintf(stderr, ARGS)
@@ -28,6 +30,9 @@ typedef ElfW(Sym) symbol_table_t;
 char *get_section_header_name(elf_header_t *elf_header,
                               section_header_t *shstrtab,
                               uint32_t index);
+/* Returns the symbol name as string. Works the same as 'get_section_header_name' but for symbols
+ * (+ using strtab section). */
+char *get_symbol_name(elf_header_t *elf_header, section_header_t *strtab, uint32_t index);
 int handle_so_path(char *so_path);
 void print_usage(char *bin_path);
 
@@ -54,6 +59,10 @@ char *get_section_header_name(elf_header_t *elf_header,
   return (char *)((elf_offset_t)elf_header + shstrtab->sh_offset + (elf_offset_t)index);
 }
 
+char *get_symbol_name(elf_header_t *elf_header, section_header_t *strtab, uint32_t index) {
+  return (char *)((elf_offset_t)elf_header + strtab->sh_offset + (elf_offset_t)index);
+}
+
 int handle_so_path(char *so_path) {
   /* fields related to open and mmap. */
   static int file_descriptor;
@@ -64,7 +73,7 @@ int handle_so_path(char *so_path) {
   static int not_dyn_elf;
 
   static elf_header_t *elf_header;
-  static section_header_t *shstrtab;
+  static section_header_t *shstrtab, *strtab;
   static symbol_table_t *symtab;
   static uint64_t symbol_count;
 
@@ -75,6 +84,9 @@ int handle_so_path(char *so_path) {
   /* NOTE: Guarantees 32 bits usage since index can be either 'ElfN_Ehdr.e_shstrndx' (uint16_t) or
    * 'ElfN_Shdr.sh_link' (uint32_t) field. */
   static uint32_t shstrtab_index;
+
+  /* Dynamic handler ('dlopen' function output). */
+  static void *handler;
 
   if ((file_descriptor = open(so_path, O_RDONLY)) < 0) {
     eprintf("Error: '%s' file openning failed!\n", so_path);
@@ -140,6 +152,7 @@ int handle_so_path(char *so_path) {
   /* -1 meaning custom section not found. Init aux tables as null. */
   custom_section_index = -1;
   symtab = NULL;
+  strtab = NULL;
 
   /* auxiliar variables for section searching. */
   section_header_t *current_section;
@@ -147,7 +160,7 @@ int handle_so_path(char *so_path) {
 
   for (uint32_t i = 0; i < elf_header->e_shnum; i++) {
     /* when custom section index + symtab already find. */
-    if ((custom_section_index >= 0) && symtab)
+    if ((custom_section_index >= 0) && symtab && strtab)
       break;
 
     current_section = (section_header_t *)(
@@ -169,6 +182,9 @@ int handle_so_path(char *so_path) {
       );
       symbol_count = current_section->sh_size / current_section->sh_entsize;
     }
+
+    else if (strcmp(section_name, STR_TABLE_IDENTIFIER) == 0)
+      strtab = current_section;
   }
 
   /* if custom section not found. */
@@ -185,10 +201,44 @@ int handle_so_path(char *so_path) {
     return 0;
   }
 
-  printf("%s index: %ld\n", CUSTOM_SECTION_NAME, custom_section_index);
-  printf("%s head address: %p\n", SYMBOL_TABLE_IDENTIFIER, symtab);
-  printf("symbol count: %ld\n", symbol_count);
+  /* if strtab section header not found. */
+  else if (!strtab) {
+    eprintf("Error: couldn't find '%s' section header on '%s'!\n", STR_TABLE_IDENTIFIER, so_path);
+    munmap(file_map, file_stat.st_size);
+    return 0;
+  }
 
+  if (!(handler = dlopen(so_path, RTLD_NOW))) {
+    eprintf("Error: couldn't open %s. Cause: %s\n", so_path, dlerror());
+    munmap(file_map, file_stat.st_size);
+    return 0;
+  }
+
+  symbol_table_t *current_symbol;
+  char *current_symbol_name;
+  void (*function)(void);
+
+  for (uint32_t i = 0; i < symbol_count; i++) {
+    current_symbol = (symbol_table_t *)((elf_offset_t)symtab + (elf_offset_t)(i * sizeof(symbol_table_t)));
+
+    if (current_symbol->st_shndx != custom_section_index)
+      continue;
+
+    current_symbol_name = current_symbol->st_name ? get_symbol_name(elf_header, strtab, current_symbol->st_name) : "(unnamed)";
+    function = dlsym(handler, current_symbol_name);
+
+    if (!function) {
+      eprintf("Error: dlsym failed to retrieve '%s' symbol!\n", current_symbol_name);
+      dlclose(handler);
+      munmap(file_map, file_stat.st_size);
+      return 0;
+    }
+
+    printf("Running '%s':\n", current_symbol_name);
+    function();
+  }
+
+  dlclose(handler);
   munmap(file_map, file_stat.st_size);
   return 1;
 }

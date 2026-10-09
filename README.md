@@ -15,6 +15,7 @@ My thoughts and discoveries gonna be documented right bellow!
 - [how are `.so` files related to the `acrt` runtime?](#how-are-so-files-related-to-the-acrt-runtime)
   - [why not just compiling it into an executable?](#why-not-just-compiling-it-into-an-executable)
   - [how does `.so` solve this?](#how-does-so-solve-this)
+- [how does `acrt` works?](#how-does-acrt-works)
 - [resources](#resources)
 
 ## The program's goal
@@ -375,6 +376,35 @@ $ readelf --symbols main
 
 So, a custom section can store our specific scope functions, and later, be accessed by a dedicated
 manager. These steps will be better explained at next subject!
+
+## How does `acrt` works?
+
+The following section gives an introduction about `acrt`'s workflow:
+
+<div align="center" id="acrt-program-workflow-image">
+
+![acrt program workflow](./02-acrt-program-workflow.svg)
+
+_02 - `acrt` program workflow (open for a better overview)_
+
+</div>
+
+Our case running step-by-step works like:
+1. write test cases (C source code) fixing it until be _'compilable'_;
+2. initialize the `acrt` runtime by passing the shared object as input;
+3. for any of the following steps, we can early return since they're non-recoverable:
+   - load the object's data in-memory;
+   - parse/check object's data;
+   - look for custom + auxiliar section headers (`.shstrtab`, `.strtab`, `.symtab`);
+   - dynamically load the `.so` library (by using `dlopen` function).
+4. create a state machine to store the test cases sumary.
+5. iterate over all symbols that are located on `acrt`'s target section. For each one of those
+   symbol (report recoverable state on fail):
+   - load it by using `dlsym`;
+   - run it;
+   - update state machine + optionally report if necessary.
+6. display the machine final state;
+7. exit with an appropriate code.
 
 ## Resources
 

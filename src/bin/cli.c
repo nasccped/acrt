@@ -2,6 +2,7 @@
 #include "cli_flags.h"
 #include "help_subcommand.h"
 #include "print_defs.h"
+#include "version_subcommand.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -117,6 +118,27 @@ bool run_app(cli_t *cli) {
 
     // run help.
     run_help_subcommand(cli->self_path, FLAG_INCLUDES(cli->global_flags, FCI_VERBOSE));
+    return true;
+  }
+
+  // if version flag called.
+  else if (FLAG_INCLUDES(cli->global_flags, FCI_VERSION)) {
+
+    // if any other flag than verbose.
+    if (FLAG_REMOVE(cli->global_flags, FCI_VERBOSE | FCI_VERSION)) {
+      FLAG_CONFLICTS_MESSAGE(FLN_VERSION);
+      printerr("Only %s flag can be used with this one!\n", FLN_VERBOSE);
+      return false;
+    }
+
+    // if some path used with version flag.
+    else if (cli->path_count) {
+      FLAG_CONFLICTS_MESSAGE(FLN_VERSION);
+      printerr("File paths can't be passed next to it!\n");
+      return false;
+    }
+
+    run_version_subcommand(cli->self_path, FLAG_INCLUDES(cli->global_flags, FCI_VERBOSE));
     return true;
   }
 

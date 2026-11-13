@@ -9,12 +9,5 @@ int main(int argc, char *argv[]) {
   if (!parse_cli(&cli, argc, argv))
     return 1;
 
-  printf("--- Cli succefully parsed ---\n");
-  printf(" Flag value: %ld\n", cli.global_flags);
-  printf(" Paths:\n");
-
-  for (int i = 0; i < cli.path_count; i++)
-    printf("   [%2d] %s\n", i + 1, cli.paths[i]);
-
-  return 0;
+  return run_app(&cli) ? 0 : 1;
 }

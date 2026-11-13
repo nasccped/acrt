@@ -8,6 +8,9 @@
 // Max number of items that the program can handle without requiring reallocations.
 #define BUFFER_MAX_SIZE 64
 
+// Globally accessible program description (used at --help invoke).
+#define PROGRAM_DESCRIPTION "Easy and ergonomic testing runtime for C apps"
+
 // Use opaque type-definition to flag code identifier (defined at cli_flags.h).
 typedef size_t fci_t;
 
@@ -31,5 +34,10 @@ typedef struct {
 // The parsing error is reported at function-scoped runtime. Basically, out-scope function printing
 // isn't necessary.
 bool parse_cli(cli_t *cli, int argc, char *argv[]);
+
+// Does the app running and returns a boolean where:
+// - 'true' means run succeeded;
+// - 'false' means run failed.
+bool run_app(cli_t *cli);
 
 #endif

@@ -1,10 +1,15 @@
 #include "cli.h"
 #include "cli_flags.h"
+#include "help_subcommand.h"
 #include "print_defs.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// Prints the flag conflict tagged error message.
+#define FLAG_CONFLICTS_MESSAGE(FLAG_NAME) \
+  tagged_err("%s flag conflicts with other arguments.\n", (FLAG_NAME))
 
 // Type alias for argument handler function pointer.
 typedef bool (*arg_handler_t)(cli_t *, char *);
@@ -88,6 +93,34 @@ bool parse_cli(cli_t *cli, int argc, char *argv[]) {
       return false;
   }
 
+  return true;
+}
+
+bool run_app(cli_t *cli) {
+
+  // if help flag called.
+  if (FLAG_INCLUDES(cli->global_flags, FCI_HELP)) {
+
+    // if any other flag than verbose.
+    if (FLAG_REMOVE(cli->global_flags, FCI_VERBOSE | FCI_HELP)) {
+      FLAG_CONFLICTS_MESSAGE(FLN_HELP);
+      printerr("Only %s flag can be used with this one!\n", FLN_VERBOSE);
+      return false;
+    }
+
+    // if some path used with help flag.
+    else if (cli->path_count) {
+      FLAG_CONFLICTS_MESSAGE(FLN_HELP);
+      printerr("File paths can't be passed next to it!\n");
+      return false;
+    }
+
+    // run help.
+    run_help_subcommand(cli->self_path, FLAG_INCLUDES(cli->global_flags, FCI_VERBOSE));
+    return true;
+  }
+
+  printerr("TODO: add other operations...\n");
   return true;
 }
 

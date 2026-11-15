@@ -9,16 +9,19 @@
 #define FCI_HELP          (_INITIAL_FCI_VALUE << 0)
 #define FCI_VERSION       (_INITIAL_FCI_VALUE << 1)
 #define FCI_VERBOSE       (_INITIAL_FCI_VALUE << 2)
+#define FCI_RERUN         (_INITIAL_FCI_VALUE << 3)
 
 // Flag long name (FLN) definitions.
 #define FLN_HELP    "help"
 #define FLN_VERSION "version"
 #define FLN_VERBOSE "verbose"
+#define FLN_RERUN   "rerun"
 
 // Flag short name/alias (FSN) definitions.
 #define FSN_HELP    'h'
 #define FSN_VERSION 'V'
 #define FSN_VERBOSE 'v'
+#define FSN_RERUN    0
 
 // Returns if the ORIGINAL flag includes the given VALUE.
 #define FLAG_INCLUDES(ORIGINAL, VALUE) ((ORIGINAL) & (VALUE))
@@ -47,10 +50,11 @@ typedef struct {
 
 // Globally available flags by cli parsers.
 static const flag_t GLOBAL_FLAGS[] = {
-  // long name       short name       description                         code
-  { FLN_HELP,        FSN_HELP,        "Prints the help panel",            FCI_HELP    },
-  { FLN_VERSION,     FSN_VERSION,     "Prints the version info",          FCI_VERSION },
-  { FLN_VERBOSE,     FSN_VERBOSE,     "Does the operation verbosely",     FCI_VERBOSE },
+  // long name       short name       description                                   code
+  { FLN_HELP,        FSN_HELP,        "Prints the help panel",                      FCI_HELP    },
+  { FLN_VERSION,     FSN_VERSION,     "Prints the version info",                    FCI_VERSION },
+  { FLN_VERBOSE,     FSN_VERBOSE,     "Does the operation verbosely",               FCI_VERBOSE },
+  { FLN_RERUN,       FSN_RERUN,       "Allow running same file more than once",     FCI_RERUN   },
 };
 
 // Counting of global flags (used on loop/linear searches).

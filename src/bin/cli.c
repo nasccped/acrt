@@ -2,6 +2,7 @@
 #include "cli_flags.h"
 #include "help_subcommand.h"
 #include "print_defs.h"
+#include "runtime_entrypoint.h"
 #include "version_subcommand.h"
 
 #include <stdio.h>
@@ -142,8 +143,7 @@ bool run_app(cli_t *cli) {
     return true;
   }
 
-  printerr("TODO: add other operations...\n");
-  return true;
+  return main_run(cli);
 }
 
 bool add_path(cli_t *cli, char *path) {

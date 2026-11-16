@@ -3,9 +3,6 @@
 #include "print_defs.h"
 #include "runtime_entrypoint.h"
 
-// Instance interface.
-#include "file_instance_generic.h"
-
 #ifdef __ELF__
   #include "file_instance_elf.h"
 #else
@@ -23,9 +20,11 @@ typedef struct {
 
 bool manager_init(instance_manager_t *im, int count, char **files, fci_t flags);
 void manager_deinit(instance_manager_t *im);
+bool manager_run(instance_manager_t *im, fci_t flags);
 
 bool main_run(cli_t *cli) {
   static instance_manager_t im = { 0 };
+  static bool result = true;
 
   // if initializing failed.
   if (!manager_init(&im, cli->path_count, cli->paths, cli->global_flags)) {
@@ -33,11 +32,14 @@ bool main_run(cli_t *cli) {
     return false;
   }
 
+  result = manager_run(&im, cli->global_flags);
   manager_deinit(&im);
-  return true;
+
+  return result;
 }
 
 bool manager_init(instance_manager_t *im, int count, char **files, fci_t flags) {
+  static gii_t init_result;
   static gfi_t *instance_ptr, instance_concrete;
   static char *instance_path;
 
@@ -52,15 +54,25 @@ bool manager_init(instance_manager_t *im, int count, char **files, fci_t flags) 
         "Passing same file twice isn't allowed by default. That's a safe workflow\n"
         "which prevents consecutive runs, global variables mess up and unexpected behavior!\n"
         "\n"
-        "You can still force it by using the '--%s' flag which allows the same object\n"
-        "file to be ran two or more times.\n",
+      );
+
+      tagged_tip(
+        stderr,
+        "You can still force it by using the '--%s' flag which allows the same\n"
+        "object file to be ran two or more times.\n",
         FLN_RERUN
       );
+
       return false;
     }
 
     else {
-      gfi_init(&instance_concrete, instance_path);
+      if ((init_result = gfi_init(&instance_concrete, instance_path)).init_status != II_OK) {
+        tagged_err("instance initializing failed for '%s' file.\n", instance_path);
+        print_gii(&init_result, flags);
+        return false;
+      }
+
       instance_ptr = &instance_concrete;
     }
 
@@ -78,4 +90,15 @@ void manager_deinit(instance_manager_t *im) {
   }
 
   im->count = 0;
+}
+
+bool manager_run(instance_manager_t *im, fci_t flags) {
+  bool result = true;
+  (void)flags;
+
+  for (int i = 0; i < im->count; i++) {
+    result &= gfi_run(&im->instance_array[i]);
+  }
+
+  return result;
 }

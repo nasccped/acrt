@@ -1,6 +1,9 @@
 #ifndef _ACRT_FILE_INSTANCE_GENERIC_H_
 #define _ACRT_FILE_INSTANCE_GENERIC_H_
 
+#include <stdbool.h>
+#include <stdlib.h>
+
 // This file provides the interface for generic file input instances, such as:
 // - type alias (generic file instance, aka 'gfi_t');
 // - common functions:
@@ -31,28 +34,27 @@
 // implementation is closed to the well defined concrete types.
 typedef struct generic_file_instance gfi_t;
 
-// Return type meaning the gfi initializing status. It can be just refers to 'II_OK' as init status
-// (which is the expected) meaning a successfully initialization, or any other enumeration
-// accomplished by helper info fields within anonymous struct/unions.
-typedef struct {
-
-  enum { II_OK } init_status;
-
-  // NOTE: add helper fields to express the error kind.
-  // ...
-
-} instance_init_t;
+// Type meaning the gfi initializing status. This type is just an alias to the real implementation
+// which must be done at implementors sources.
+typedef struct generic_instance_init gii_t;
 
 // Iterates over a generic file instance array searching for a instance that matches the provided
 // file path. The returned value is a pointer to that instance (or NULL if not found).
 gfi_t *find_gfi_by_path(int count, gfi_t *gfi_arr, char *file_path);
 
 // Initialize the generic instance pointer fields by using the provided pathname. Since the
-// initializing can fail, an instance_init state is returned meaning the initialize result. If
-// operation somehow fails, the deallocations are done within function's scope.
-instance_init_t gfi_init(gfi_t *gfi, char *file_path);
+// initializing can fail, an generic instance init state is returned meaning the initialize result.
+// If operation somehow fails, the deallocations are done within function's scope.
+gii_t gfi_init(gfi_t *gfi, char *file_path);
 
 // De-initializes the generic file instance inner fields.
 void gfi_deinit(gfi_t *gfi);
+
+// Runs an already initialized generic file instance + returns a boolean meaning the operation
+// success.
+bool gfi_run(gfi_t *gfi);
+
+// Prints the generic instance init status at stderr. Prints nothing if not an error.
+void print_gii(gii_t *gii, size_t flags);
 
 #endif

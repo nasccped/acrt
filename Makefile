@@ -1,12 +1,22 @@
 CC:=gcc
 CFLAGS:=-Wall -Wextra -Werror
 
-SRC_DIR:=./src
+ifdef DEBUG
+	CFLAGS+=-g
+endif
+
+# core paths
+RUNTIME_DIR:=./runtime
 OUT_DIR:=./out
-BIN_SRC_DIR:=$(SRC_DIR)/bin
-BIN_SOURCES:=$(wildcard $(BIN_SRC_DIR)/*.c)
-BIN_OUTPUT:=$(OUT_DIR)/acrt
+
+# runtime related fields
+RUNTIME_SRCS:=$(wildcard $(RUNTIME_DIR)/*.c)
+RUNTIME_OBJS:=$(patsubst $(RUNTIME_DIR)/%.c,$(OUT_DIR)/%.o,$(RUNTIME_SRCS))
+RUNTIME_OUT:=$(OUT_DIR)/acrt
+
+# required compile-time definitions
 COMPTIME_DEFINITIONS:= \
+											 -DPROGRAM_DESCRIPTION='"Easy and ergonomic testing runtime for C apps"' \
 											 -DPROGRAM_TAG='"$(shell git describe --tags --abbrev=0 HEAD)"' \
 											 -DPROGRAM_SHORT_COMMIT_HASH='"$(shell git rev-parse --short HEAD)"' \
 											 -DPROGRAM_FULL_COMMIT_HASH='"$(shell git rev-parse HEAD)"' \
@@ -15,16 +25,17 @@ COMPTIME_DEFINITIONS:= \
 											 -DPROGRAM_COMPILER='"$(CC)"' \
 											 -DCOMPILER_VERSION='"$(shell $(CC) -dumpversion)"'
 
-ifdef DEBUG
-	CFLAGS+=-g
-endif
-
-all: $(BIN_OUTPUT)
+all: $(RUNTIME_OUT)
 
 $(OUT_DIR):
-	mkdir $@
+	mkdir "$@"
 
-$(BIN_OUTPUT): $(OUT_DIR)
-	$(CC) $(CFLAGS) $(BIN_SOURCES) $(COMPTIME_DEFINITIONS) -o $@
+# runtime executable build recipe
+$(RUNTIME_OUT): $(RUNTIME_OBJS)
+	$(CC) $^ -o $@
+
+# runtime-objs build recipe
+$(OUT_DIR)/%.o: $(RUNTIME_DIR)/%.c $(OUT_DIR)
+	$(CC) $(CFLAGS) $(COMPTIME_DEFINITIONS) -c $< -o $@
 
 .PHONY: all

@@ -96,9 +96,12 @@ static inline bool run_files(cli_t *restrict cli) {
       return false;
     }
 
-    // else:
-    TAGWARN(stdout, "no files were passed.");
-    printf("Exiting normally!\n");
+    // Warn only if not suppressed:
+    if (!FLAG_INTERSECTION(cli->flags, FCI_SUPPRESS_WARNINGS)) {
+      TAGWARN(stdout, "no files were passed.");
+      printf("Exiting normally!\n");
+    }
+
     return true;
   }
 

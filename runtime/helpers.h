@@ -1,6 +1,7 @@
 #ifndef _ACRT_RUNTIME_HELPERS_H_
 #define _ACRT_RUNTIME_HELPERS_H_
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 /* This file provides runtime definitions and macro helpers to avoid out-of-context including
@@ -14,9 +15,10 @@
 #define FCI_DUMP_VERSION      (__FCI_INIT << 0)
 #define FCI_HELP              (__FCI_INIT << 1)
 #define FCI_MAY_EMPTY         (__FCI_INIT << 2)
-#define FCI_SUPPRESS_WARNINGS (__FCI_INIT << 3)
-#define FCI_VERBOSE           (__FCI_INIT << 4)
-#define FCI_VERSION           (__FCI_INIT << 5)
+#define FCI_RERUN             (__FCI_INIT << 3)
+#define FCI_SUPPRESS_WARNINGS (__FCI_INIT << 4)
+#define FCI_VERBOSE           (__FCI_INIT << 5)
+#define FCI_VERSION           (__FCI_INIT << 6)
 
 // Returns the intersection between two flags (A and B).
 #define FLAG_INTERSECTION(A, B) ((A) & (B))
@@ -28,6 +30,7 @@
 #define FLN_DUMP_VERSION      "dump-version"
 #define FLN_HELP              "help"
 #define FLN_MAY_EMPTY         "may-empty"
+#define FLN_RERUN             "rerun"
 #define FLN_SUPPRESS_WARNINGS "suppress-warnings"
 #define FLN_VERBOSE           "verbose"
 #define FLN_VERSION           "version"
@@ -36,6 +39,7 @@
 #define FSN_DUMP_VERSION       0
 #define FSN_HELP              'h'
 #define FSN_MAY_EMPTY          0
+#define FSN_RERUN              0
 #define FSN_SUPPRESS_WARNINGS 'S'
 #define FSN_VERBOSE           'v'
 #define FSN_VERSION           'V'
@@ -76,6 +80,7 @@ typedef struct {
 // Available global flags for the cli parsing.
 static const flag_t GLOBAL_FLAGS[] = {
   // long name                 alias                      description                                               code
+  { FLN_RERUN,                 FSN_RERUN,                 "Allow an input file to be ran more than once",           FCI_RERUN             },
   { FLN_SUPPRESS_WARNINGS,     FSN_SUPPRESS_WARNINGS,     "Suppress all generated warnings",                        FCI_SUPPRESS_WARNINGS },
   { FLN_MAY_EMPTY,             FSN_MAY_EMPTY,             "Report and exit normally even if no files provided",     FCI_MAY_EMPTY         },
   { FLN_HELP,                  FSN_HELP,                  "Prints the help info",                                   FCI_HELP              },
@@ -86,5 +91,15 @@ static const flag_t GLOBAL_FLAGS[] = {
 
 // Global flags when searching for a match (iteration method).
 static const size_t GLOBAL_FLAGS_COUNT = sizeof(GLOBAL_FLAGS) / sizeof(flag_t);
+
+#if defined(__linux__) || defined(__unix__)
+# define CURDIR_PREFIX "./"
+# define ROOT_PREFIX   "/"
+#else
+# error "No default definition(s) for this platform. See helpers.h!"
+#endif
+
+// Returns if a path string requires the CURDIR_PREFIX.
+bool path_requires_curdir_prefix(char *);
 
 #endif

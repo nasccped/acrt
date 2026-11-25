@@ -3,7 +3,12 @@
 
 #include "platform.h"
 
+#include <elf.h>
+#include <link.h>
 #include <stdlib.h>
+
+typedef ElfW(Ehdr) elfh_t;
+typedef ElfW(Shdr) sech_t;
 
 /* Data struct referring to an unix required fields. Since both mapped memory and dynamically
  * loaded object is needed for this operation, this struct holds the file name and required fields
@@ -14,7 +19,12 @@ struct platform_dependent {
 
   union {
     void *mdata;
+    elfh_t *eh;
   };
+
+  sech_t *shstrtab, *strtab, *symtab;
+
+  int shtestcase_ndx;
 
   void *dlobj;
 };

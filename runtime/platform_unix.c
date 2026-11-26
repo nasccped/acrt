@@ -3,11 +3,11 @@
 #include "helpers.h"
 #include "platform_unix.h"
 #include "../definitions/acrt_definitions.h"
+#include "pformat.h"
 
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -213,8 +213,12 @@ bool platdep_init(unixdep_t *restrict ud, char *path) {
 }
 
 bool platdep_run(unixdep_t *restrict ud) {
-  (void)ud;
-  // TODO: add run.
+  if (!ud->testcase.found) {
+    TAGWARN(_stdout, "no '%s' section found!", TESTCASE_IDENTIFIER);
+    return true;
+  }
+
+  // TODO: add actual run.
   return true;
 }
 

@@ -1,5 +1,6 @@
 #include "cli.h"
 #include "helpers.h"
+#include "pformat.h"
 
 /* Platform including. ------------------------------------------------------------------------- */
 #if defined(__linux__) || defined(__unix__)
@@ -11,7 +12,6 @@
 
 #include "runner.h"
 
-#include <stdio.h>
 #include <string.h>
 
 // Tip shorthand when flag expects only verbose flag.
@@ -210,7 +210,7 @@ static bool inpinst_init(inpinst_t *inpinst, const char *path) {
       return false;
     }
 
-    else if (sprintf(name_str, "%s%s", CURDIR_PREFIX_STR, path) < MINIMUM_SPRINTF_SUCCESS) {
+    else if (_sprintf(name_str, "%s%s", CURDIR_PREFIX_STR, path) < MINIMUM_SPRINTF_SUCCESS) {
       TAGERR("failed to write input instance resources (read [%s:%d]).", __FILE__, __LINE__);
       free(name_str);
       return false;
@@ -292,7 +292,7 @@ static bool inpseq_populate() {
 
         if (flag_code_matches(&FLAG_VERBOSE, global_cli.flags)) {
           PRINTERR("\n");
-          TAGTIP(stderr, "passing the same file won't load two instances of an object!\n"
+          TAGTIP(_stderr, "passing the same file won't load two instances of an object!\n"
                          "Actually, it'll load a single instance, and then, point to the\n"
                          "same instance of that file (according to program's use case).");
         }
@@ -344,7 +344,7 @@ static bool run_dump_version() {
     return false;
   }
 
-  printf("%s\n", PROGRAM_TAG);
+  _printf("%s\n", PROGRAM_TAG);
   return true;
 }
 
@@ -365,27 +365,27 @@ static bool run_help() {
   // Increment on 3:
   fdg += 3;
 
-  printf("%s.\n\n", PROGRAM_DESCRIPTION);
-  printf("Usage: %s [OPTION(S)] [FILE_PATH(S)]\n\n", global_cli.self_path);
-  printf("Options:\n");
+  _printf("%s.\n\n", PROGRAM_DESCRIPTION);
+  _printf("Usage: %s [OPTION(S)] [FILE_PATH(S)]\n\n", global_cli.self_path);
+  _printf("Options:\n");
 
   // Print each flag info:
   for (size_t i = 0; i < GLOBAL_FLAGS_COUNT; i++) {
-    printf("  ");
+    set_left_gap(2);
 
     if (GLOBAL_FLAGS[i]->alias)
-      printf("-%c, ", GLOBAL_FLAGS[i]->alias);
+      _printf("-%c, ", GLOBAL_FLAGS[i]->alias);
     else
-      printf("    ");
+      _printf("    ");
 
-    printf("--%-*s %s\n",
+    _printf("--%-*s %s\n",
            (int)fdg, GLOBAL_FLAGS[i]->name, GLOBAL_FLAGS[i]->description);
   }
 
   // If not verbose:
   if (!flag_code_matches(&FLAG_VERBOSE, global_cli.flags)) {
-    printf("\n");
-    TAGTIP(stdout, "you can use '--%s' flag to get a more descriptive info.", FLAG_VERBOSE.name);
+    _printf("\n");
+    TAGTIP(_stdout, "you can use '--%s' flag to get a more descriptive info.", FLAG_VERBOSE.name);
     return true;
   }
 
@@ -403,14 +403,14 @@ static bool run_inputs() {
       TAGERR("missing input file(s)/flag(s).");
       PRINTERR("\nRuns without files aren't allowed by default but can be forced\n"
                "with the '--%s' flag!\n\n", FLAG_MAY_EMPTY.name);
-      TAGTIP(stderr, "consider using '--%s' to get an usage overview!", FLAG_HELP.name);
+      TAGTIP(_stderr, "consider using '--%s' to get an usage overview!", FLAG_HELP.name);
       return false;
     }
 
     // only warn when no suppress warns.
     if (!flag_code_matches(&FLAG_SUPPRESS_WARNINGS, global_cli.flags)) {
-      TAGWARN(stdout, "no files were passed.");
-      printf("Exiting normally!\n");
+      TAGWARN(_stdout, "no files were passed.");
+      _printf("Exiting normally!\n");
     }
 
     return true;
@@ -434,7 +434,7 @@ static bool run_version() {
   }
 
   else if (!flag_code_matches(&FLAG_VERBOSE, global_cli.flags))
-    printf("%s %s (%s %s)\n",
+    _printf("%s %s (%s %s)\n",
            global_cli.self_path,
            PROGRAM_TAG,
            PROGRAM_SHORT_COMMIT_HASH,
@@ -442,12 +442,12 @@ static bool run_version() {
     );
 
   else {
-    printf("binary: %s\n", global_cli.self_path);
-    printf("commit hash: %s\n", PROGRAM_FULL_COMMIT_HASH);
-    printf("commit date: %s\n", PROGRAM_COMMIT_DATE);
-    printf("host machine: %s\n", PROGRAM_HOST_MACHINE);
-    printf("release tag: %s\n", PROGRAM_TAG);
-    printf("compiled with: %s %s\n", PROGRAM_COMPILER, COMPILER_VERSION);
+   _printf("binary: %s\n", global_cli.self_path);
+   _printf("commit hash: %s\n", PROGRAM_FULL_COMMIT_HASH);
+   _printf("commit date: %s\n", PROGRAM_COMMIT_DATE);
+   _printf("host machine: %s\n", PROGRAM_HOST_MACHINE);
+   _printf("release tag: %s\n", PROGRAM_TAG);
+   _printf("compiled with: %s %s\n", PROGRAM_COMPILER, COMPILER_VERSION);
   }
 
   return true;

@@ -1,7 +1,7 @@
 #include "cli.h"
 #include "parser.h"
+#include "pformat.h"
 
-#include <stdio.h>
 #include <string.h>
 
 #define A_FLAG_LISTING_OVERVIEW_STR "a flag listing overview"

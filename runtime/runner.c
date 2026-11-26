@@ -82,6 +82,8 @@ struct input_variant {
     struct input_instance *refr,
     inst;
   };
+
+  bool success;
 };
 
 // Refers to a sequence of inputs. Just an alternative for indexing and array handling.
@@ -143,6 +145,9 @@ static inpinst_t *inpseq_find_instance_by_path(const char *);
  * WARN: it doesn't de-initializes the input sequence. It must be clear with inpseq_clear at
  * caller's function body. */
 static bool inpseq_populate();
+
+// Runs all files on input sequence + returns a boolean meaning the operation success.
+static bool inpseq_run();
 
 /* Runs the '--dump-version' kind of flag. This function also does other checks at cli fields
  * looking for conflicting state:
@@ -316,6 +321,26 @@ static bool inpseq_populate() {
   }
 
   return true;
+}
+
+static bool inpseq_run() {
+  static bool success = true;
+  static inpinst_t *current;
+
+  set_left_gap(1);
+  _printf("===== Running %d input(s) =====\n", inpseq.count);
+
+  for (int i = 0; i < inpseq.count; i++) {
+    current = (inpseq.inputs[i].variant_kind == VK_INSTANCE)
+      ? &inpseq.inputs[i].inst
+      : inpseq.inputs[i].refr;
+
+    set_left_gap(1);
+    _printf("> %s:\n", inpname_get_unprefixed_name(&current->name));
+    success = success && platdep_run(&current->pd);
+  }
+
+  return success;
 }
 
 static inline bool input_path_requires_prefix(const char *path) {

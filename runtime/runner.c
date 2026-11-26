@@ -395,7 +395,7 @@ static bool run_help() {
 }
 
 static bool run_inputs() {
-  static inpseq_t inpseq = { 0 };
+  static bool success;
 
   if (!global_cli.path_count) {
 
@@ -416,14 +416,15 @@ static bool run_inputs() {
     return true;
   }
 
-  if (!inpseq_populate(&inpseq)) {
-    inpseq_clear(&inpseq);
+  if (!inpseq_populate()) {
+    inpseq_clear();
     return false;
   }
 
-  // TODO: impl
-  inpseq_clear(&inpseq);
-  return true;
+  success = inpseq_run();
+  inpseq_clear();
+
+  return success;
 }
 
 static bool run_version() {

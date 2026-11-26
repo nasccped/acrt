@@ -19,6 +19,7 @@
 #define FSTAT_SUCCESS       0
 #define MINIMUM_VALID_FD    0
 #define TESTCASE_IDENTIFIER __ACRT_TEST_CASE_SECTION_NAME
+#define TESTCASE_NOT_FOUND  (0b1 << 17) /* Default value fro shtestcase_ndx field. */
 #define SHINDEX_UNDEF       (uint64_t)(SHN_UNDEF)
 #define STRTAB_IDENTIFIER   ".strtab"      /* String table section header name */
 #define STRTAB_LONG_NAME    "string table"
@@ -177,8 +178,6 @@ bool platdep_init(unixdep_t *restrict ud, char *path) {
   }
 
   shstrndx = (uint32_t)temp_shstrndx;
-
-  ud->shtestcase_ndx = -1;
   ud->shstrtab = get_section_header(ud->eh, (offset_t)shstrndx);
 
   for (offset_t i = 0; i < shnum; i++) {
@@ -191,11 +190,16 @@ bool platdep_init(unixdep_t *restrict ud, char *path) {
     else if (strcmp(shname, SYMTAB_IDENTIFIER) == 0)
       ud->symtab = temp_sech;
 
-    else if (strcmp(shname, TESTCASE_IDENTIFIER) == 0)
-      ud->shtestcase_ndx = (int)i;
+    else if (strcmp(shname, TESTCASE_IDENTIFIER) == 0) {
+      ud->testcase.found = true;
+      /* NOTE: conversion to uint16_t type seems safe since st_shndx field from ElfN_Sym is 16
+       * bits for both architectures. This also avoids repetitive casting at platdep_run
+       * function. */
+      ud->testcase.index = (uint16_t)i;
+    }
 
     // break if all sections found.
-    if (ud->symtab && ud->strtab && ud->shtestcase_ndx > 0)
+    if (ud->symtab && ud->strtab && ud->testcase.found)
       break;
   }
 

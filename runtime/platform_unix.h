@@ -24,7 +24,10 @@ struct platform_dependent {
 
   sech_t *shstrtab, *strtab, *symtab;
 
-  int shtestcase_ndx;
+  struct {
+    bool found;
+    uint16_t index;
+  } testcase;
 
   void *dlobj;
 };

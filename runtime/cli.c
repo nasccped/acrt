@@ -20,9 +20,11 @@ const flag_t FLAG_HELP              = { "help",                'h',    "Prints t
 const flag_t FLAG_VERBOSE           = { "verbose",             'v',    "Does the action verbosely",                            (FCI << 4) };
 const flag_t FLAG_VERSION           = { "version",             'V',    "Prints the program version info",                      (FCI << 5) };
 const flag_t FLAG_DUMP_VERSION      = { "dump-version",        FAE,    "Prints only the version tag annotation",               (FCI << 6) };
+const flag_t FLAG_QUIET             = { "quiet",               'q',    "Run + returns the exit code without printing",         (FCI << 7) };
 
 const flag_t *GLOBAL_FLAGS[] = {
   &FLAG_RERUN,
+  &FLAG_QUIET,
   &FLAG_MAY_EMPTY,
   &FLAG_SUPPRESS_WARNINGS,
   &FLAG_HELP,
